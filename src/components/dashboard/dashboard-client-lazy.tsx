@@ -1,8 +1,9 @@
+"use client";
+
 /**
  * Lazy wrapper untuk DashboardClient.
  * Import ini di dashboard/page.tsx agar Recharts tidak masuk ke initial bundle.
  */
-"use client";
 
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";

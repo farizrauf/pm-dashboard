@@ -1,29 +1,11 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Header } from "@/components/layout/header";
-import dynamic from "next/dynamic";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ReportsClientLazy } from "@/components/reports/reports-client-lazy";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Reports" };
 export const revalidate = 60;
-
-const ReportsClient = dynamic(
-  () => import("@/components/reports/reports-client").then((m) => ({ default: m.ReportsClient })),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="space-y-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-border bg-card p-5 space-y-3">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-[200px] w-full rounded-lg" />
-          </div>
-        ))}
-      </div>
-    ),
-  }
-);
 
 export default async function ReportsPage() {
   const session = await auth();
@@ -155,7 +137,7 @@ export default async function ReportsPage() {
     <div className="flex flex-col h-full">
       <Header title="Reports" description="Analytics and insights across all projects" />
       <div className="flex-1 p-6 overflow-auto">
-        <ReportsClient
+        <ReportsClientLazy
           projects={projects}
           tasksByStatus={tasksByStatus}
           tasksByPriority={tasksByPriority}
