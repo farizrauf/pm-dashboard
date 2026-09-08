@@ -80,11 +80,10 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
     finally { setLoading(false); }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file"); return; }
-    if (file.size > 2 * 1024 * 1024) { toast.error("Image must be under 2 MB"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("File must be under 5 MB"); return; }
     const reader = new FileReader();
     reader.onload = () => setForm((p) => ({ ...p, image: String(reader.result) }));
     reader.readAsDataURL(file);
@@ -161,10 +160,16 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
                 <span className="text-xs font-mono text-muted-foreground">{inv.invoiceNo}</span>
                 <div className="flex items-center gap-2 min-w-0">
                   {inv.image ? (
-                    <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md border border-border">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={inv.image} alt={inv.title} className="h-full w-full object-cover" />
-                    </div>
+                    inv.image.startsWith("data:image/") ? (
+                      <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md border border-border">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={inv.image} alt={inv.title} className="h-full w-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted/60">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )
                   ) : (
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted/60">
                       <ImageIcon className="h-4 w-4 text-muted-foreground" />
@@ -258,16 +263,26 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
               <Textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} rows={2} />
             </div>
             <div className="space-y-1.5">
-              <Label>Invoice Image</Label>
+              <Label>Invoice File</Label>
               {form.image ? (
-                <div className="relative overflow-hidden rounded-xl border border-border">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={form.image} alt="Invoice preview" className="max-h-44 w-full object-cover" />
+                <div className="flex items-center gap-3 rounded-xl border border-border p-3">
+                  {form.image.startsWith("data:image/") ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={form.image} alt="Invoice preview" className="h-16 w-16 shrink-0 rounded-lg border border-border object-cover" />
+                  ) : (
+                    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-muted/60">
+                      <FileText className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{form.title || "Selected file"}</p>
+                    <p className="text-xs text-muted-foreground">File attached (max 5 MB)</p>
+                  </div>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="absolute top-2 right-2 h-7 text-xs"
+                    className="ml-auto h-7 text-xs"
                     onClick={() => setForm((p) => ({ ...p, image: "" }))}
                   >
                     Remove
@@ -276,12 +291,11 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
               ) : (
                 <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border px-4 py-6 text-center hover:border-primary transition-colors">
                   <ImagePlus className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Click to upload an image (max 2 MB)</span>
+                  <span className="text-xs text-muted-foreground">Click to upload a file (PDF, image, docs — max 5 MB)</span>
                   <input
                     type="file"
-                    accept="image/*"
                     className="hidden"
-                    onChange={handleImageChange}
+                    onChange={handleFileChange}
                   />
                 </label>
               )}
