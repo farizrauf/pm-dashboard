@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sign In | Synchro",
+  title: "Sign In",
 };
 
 export default async function LoginPage() {

@@ -119,26 +119,30 @@ export function ReportsClient({
             <CardDescription>Created vs completed tasks</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <AreaChart data={dailyActivity} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="createdGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#60A5FA" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#60A5FA" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="completedGrad2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Area type="monotone" dataKey="created" stroke="#60A5FA" strokeWidth={2} fill="url(#createdGrad)" name="Created" />
-                <Area type="monotone" dataKey="completed" stroke="#10B981" strokeWidth={2} fill="url(#completedGrad2)" name="Completed" />
-              </AreaChart>
-            </ResponsiveContainer>
+            {dailyActivity.length === 0 ? (
+              <ChartEmpty label="No activity data" />
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={dailyActivity} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="createdGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#60A5FA" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#60A5FA" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="completedGrad2" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Area type="monotone" dataKey="created" stroke="#60A5FA" strokeWidth={2} fill="url(#createdGrad)" name="Created" />
+                  <Area type="monotone" dataKey="completed" stroke="#10B981" strokeWidth={2} fill="url(#completedGrad2)" name="Completed" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -148,15 +152,19 @@ export function ReportsClient({
             <CardTitle>By Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex justify-center mb-3">
-              <PieChart width={140} height={140}>
-                <Pie data={statusChartData} cx={65} cy={65} innerRadius={40} outerRadius={62} paddingAngle={2} dataKey="value">
-                  {statusChartData.map((e, i) => <Cell key={i} fill={e.color} />)}
-                </Pie>
-              </PieChart>
-            </div>
-            <div className="space-y-1.5">
-              {statusChartData.map((e) => (
+            {statusChartData.length === 0 ? (
+              <ChartEmpty label="No status data" />
+            ) : (
+              <>
+                <div className="flex justify-center mb-3">
+                  <PieChart width={140} height={140}>
+                    <Pie data={statusChartData} cx={65} cy={65} innerRadius={40} outerRadius={62} paddingAngle={2} dataKey="value">
+                      {statusChartData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                    </Pie>
+                  </PieChart>
+                </div>
+                <div className="space-y-1.5">
+                  {statusChartData.map((e) => (
                 <div key={e.name} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-full" style={{ background: e.color }} />
@@ -165,7 +173,9 @@ export function ReportsClient({
                   <span className="font-medium">{e.value}</span>
                 </div>
               ))}
-            </div>
+                </div>
+                </>
+              )}
           </CardContent>
         </Card>
       </div>
@@ -179,15 +189,19 @@ export function ReportsClient({
             <CardDescription>Completion rate per project</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={projectProgressData} margin={{ top: 5, right: 5, left: -20, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} angle={-25} textAnchor="end" />
-                <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} domain={[0, 100]} />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`, "Progress"]} />
-                <Bar dataKey="progress" fill="#B4ABF4" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {projectProgressData.length === 0 ? (
+              <ChartEmpty label="No project data" />
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={projectProgressData} margin={{ top: 5, right: 5, left: -20, bottom: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} angle={-25} textAnchor="end" />
+                  <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} domain={[0, 100]} />
+                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`${v}%`, "Progress"]} />
+                  <Bar dataKey="progress" fill="#B4ABF4" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
 
@@ -198,15 +212,19 @@ export function ReportsClient({
             <CardDescription>Active tasks per member</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={workloadData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
-                <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={50} />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Bar dataKey="tasks" fill="#BFD2D1" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {workloadData.length === 0 ? (
+              <ChartEmpty label="No workload data" />
+            ) : (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={workloadData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} width={50} />
+                  <Tooltip contentStyle={tooltipStyle} />
+                  <Bar dataKey="tasks" fill="#BFD2D1" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -259,6 +277,17 @@ export function ReportsClient({
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+function ChartEmpty({ height = 200, label = "No data available" }: { height?: number; label?: string }) {
+  return (
+    <div
+      className="flex items-center justify-center text-sm text-muted-foreground"
+      style={{ height }}
+    >
+      {label}
     </div>
   );
 }
