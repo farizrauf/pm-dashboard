@@ -74,7 +74,12 @@ export function TasksClient({ initialTasks, total: _total, pages, projects, sear
   const [importOpen, setImportOpen] = useState(false);
 
   const updateParam = useCallback((key: string, value: string) => {
-    const params = new URLSearchParams(searchParams as Record<string, string>);
+    // Filter out undefined values before creating URLSearchParams
+    const cleanParams: Record<string, string> = {};
+    Object.entries(searchParams).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) cleanParams[k] = v;
+    });
+    const params = new URLSearchParams(cleanParams);
     if (value && value !== "ALL") {
       params.set(key, value);
     } else {
@@ -513,10 +518,15 @@ export function TasksClient({ initialTasks, total: _total, pages, projects, sear
             return (
               <Button
                 key={page}
+                type="button"
                 variant={page === current ? "default" : "outline"}
                 size="sm"
                 className="h-7 w-7 p-0 text-xs"
-                onClick={() => updateParam("page", String(page))}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  updateParam("page", String(page));
+                }}
               >
                 {page}
               </Button>

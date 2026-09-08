@@ -34,7 +34,7 @@ export async function getFinanceOverview() {
 
 const budgetSchema = z.object({
   totalAmount: z.coerce.number().min(0),
-  currency: z.string().default("USD"),
+  currency: z.string().default("IDR"),
   notes: z.string().optional().nullable(),
 });
 

@@ -34,8 +34,8 @@ const CAT_COLOR: Record<string, string> = {
   OTHER: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
 };
 
-function fmt(amount: number, currency = "USD") {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency, minimumFractionDigits: 0 }).format(amount);
+function fmt(amount: number, currency = "IDR") {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency, minimumFractionDigits: 0 }).format(amount);
 }
 
 export function FinanceClient({ projects }: { projects: Project[] }) {
@@ -47,7 +47,7 @@ export function FinanceClient({ projects }: { projects: Project[] }) {
   const [activeProjectId, setActiveProjectId] = useState<string>("");
   const [activeBudgetId, setActiveBudgetId] = useState<string>("");
   const [loading, setLoading] = useState(false);
-  const [budgetForm, setBudgetForm] = useState({ totalAmount: "", currency: "USD", notes: "" });
+  const [budgetForm, setBudgetForm] = useState({ totalAmount: "", currency: "IDR", notes: "" });
   const [expForm, setExpForm] = useState({ title: "", amount: "", category: "OTHER", date: "", description: "" });
 
   // Totals
@@ -65,7 +65,7 @@ export function FinanceClient({ projects }: { projects: Project[] }) {
 
   const openBudget = (p: Project) => {
     setActiveProjectId(p.id);
-    setBudgetForm({ totalAmount: p.budget?.totalAmount?.toString() ?? "", currency: p.budget?.currency ?? "USD", notes: p.budget?.notes ?? "" });
+    setBudgetForm({ totalAmount: p.budget?.totalAmount?.toString() ?? "", currency: p.budget?.currency ?? "IDR", notes: p.budget?.notes ?? "" });
     setBudgetOpen(true);
   };
 

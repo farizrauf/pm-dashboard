@@ -37,7 +37,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; cl
   CANCELLED: { label: "Cancelled", icon: XCircle,     cls: "bg-muted text-muted-foreground" },
 };
 
-function fmt(n: number) { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n); }
+function fmt(n: number) { return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n); }
 
 const emptyForm = { title: "", amount: "", status: "DRAFT", issuedAt: "", dueAt: "", notes: "", image: "", budgetId: "" };
 

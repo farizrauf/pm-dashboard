@@ -60,7 +60,11 @@ export function ProjectsClient({ initialProjects, total: _total, pages, searchPa
   const [isDeleting, setIsDeleting] = useState(false);
 
   const updateSearch = useCallback((key: string, value: string) => {
-    const params = new URLSearchParams(searchParams as Record<string, string>);
+    const cleanParams: Record<string, string> = {};
+    Object.entries(searchParams).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) cleanParams[k] = v;
+    });
+    const params = new URLSearchParams(cleanParams);
     if (value && value !== "ALL") {
       params.set(key, value);
     } else {
@@ -184,10 +188,11 @@ export function ProjectsClient({ initialProjects, total: _total, pages, searchPa
             return (
               <Button
                 key={page}
+                type="button"
                 variant={page === current ? "default" : "outline"}
                 size="sm"
                 className="h-7 w-7 p-0 text-xs"
-                onClick={() => updateSearch("page", String(page))}
+                onClick={(e) => { e.preventDefault(); updateSearch("page", String(page)); }}
               >
                 {page}
               </Button>
