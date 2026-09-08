@@ -66,7 +66,7 @@ export function ProjectsClient({ initialProjects, total: _total, pages, searchPa
     } else {
       params.delete(key);
     }
-    params.delete("page");
+    if (key !== "page") params.delete("page");
     router.push(`${pathname}?${params.toString()}`);
   }, [router, pathname, searchParams]);
 

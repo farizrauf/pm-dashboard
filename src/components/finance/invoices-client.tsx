@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus, FileText, CheckCircle2, Send, XCircle,
-  AlertTriangle, MoreHorizontal, Trash2, Loader2,
+  AlertTriangle, MoreHorizontal, Trash2, Loader2, ImagePlus, Image as ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ type InvoiceItem = { id: string; description: string; quantity: number; unitPric
 type Invoice = {
   id: string; invoiceNo: string; title: string; amount: number; status: string;
   issuedAt: Date; dueAt: Date | null; paidAt: Date | null; notes: string | null;
+  image: string | null;
   items: InvoiceItem[];
   budget: { id: string; project: { id: string; name: string; color: string } };
 };
@@ -38,7 +39,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; cl
 
 function fmt(n: number) { return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 0 }).format(n); }
 
-const emptyForm = { title: "", amount: "", status: "DRAFT", issuedAt: "", dueAt: "", notes: "", budgetId: "" };
+const emptyForm = { title: "", amount: "", status: "DRAFT", issuedAt: "", dueAt: "", notes: "", image: "", budgetId: "" };
 
 export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoice[]; budgets: BudgetOption[] }) {
   const router = useRouter();
@@ -67,6 +68,7 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
         issuedAt: form.issuedAt || undefined,
         dueAt: form.dueAt || null,
         notes: form.notes || null,
+        image: form.image || null,
         budgetId: form.budgetId,
       };
       const res = await createInvoice(data);
@@ -76,6 +78,16 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
       router.refresh();
     } catch { toast.error("Failed to create invoice"); }
     finally { setLoading(false); }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error("Image must be under 2 MB"); return; }
+    const reader = new FileReader();
+    reader.onload = () => setForm((p) => ({ ...p, image: String(reader.result) }));
+    reader.readAsDataURL(file);
   };
 
   const handleStatusChange = async (id: string, status: string) => {
@@ -147,9 +159,21 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
             return (
               <div key={inv.id} className="grid grid-cols-[80px_minmax(0,1fr)_130px_110px_100px_110px_40px] gap-2 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/20 transition-colors group items-center">
                 <span className="text-xs font-mono text-muted-foreground">{inv.invoiceNo}</span>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{inv.title}</p>
-                  {inv.notes && <p className="text-xs text-muted-foreground truncate">{inv.notes}</p>}
+                <div className="flex items-center gap-2 min-w-0">
+                  {inv.image ? (
+                    <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md border border-border">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={inv.image} alt={inv.title} className="h-full w-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted/60">
+                      <ImageIcon className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{inv.title}</p>
+                    {inv.notes && <p className="text-xs text-muted-foreground truncate">{inv.notes}</p>}
+                  </div>
                 </div>
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className="h-2 w-2 rounded-full shrink-0" style={{ background: inv.budget.project.color }} />
@@ -232,6 +256,35 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
             <div className="space-y-1.5">
               <Label>Notes</Label>
               <Textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} rows={2} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Invoice Image</Label>
+              {form.image ? (
+                <div className="relative overflow-hidden rounded-xl border border-border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={form.image} alt="Invoice preview" className="max-h-44 w-full object-cover" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="absolute top-2 right-2 h-7 text-xs"
+                    onClick={() => setForm((p) => ({ ...p, image: "" }))}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ) : (
+                <label className="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-xl border border-dashed border-border px-4 py-6 text-center hover:border-primary transition-colors">
+                  <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Click to upload an image (max 2 MB)</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                </label>
+              )}
             </div>
           </div>
           <DialogFooter>

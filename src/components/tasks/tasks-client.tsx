@@ -80,7 +80,7 @@ export function TasksClient({ initialTasks, total: _total, pages, projects, sear
     } else {
       params.delete(key);
     }
-    params.delete("page");
+    if (key !== "page") params.delete("page");
     router.push(`${pathname}?${params.toString()}`);
   }, [router, pathname, searchParams]);
 

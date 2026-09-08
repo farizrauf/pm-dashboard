@@ -4,11 +4,10 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { Zap, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Zap, Eye, EyeOff, Loader2, FolderKanban, Wallet, TrendingUp, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 
 const loginSchema = z.object({
@@ -17,6 +16,12 @@ const loginSchema = z.object({
 });
 
 type LoginValues = z.infer<typeof loginSchema>;
+
+const FEATURES = [
+  { icon: FolderKanban, title: "Project management", desc: "Track projects, milestones & deliverables across teams." },
+  { icon: Wallet, title: "Budget & invoicing", desc: "Monitor budgets, expenses and invoices in one place." },
+  { icon: TrendingUp, title: "Real-time insights", desc: "Dashboards for progress, risk and financial health." },
+];
 
 export function LoginForm() {
   const router = useRouter();
@@ -70,43 +75,60 @@ export function LoginForm() {
     }
   };
 
-  const handleDemoLogin = async (email: string) => {
-    setIsLoading(true);
-    try {
-      const res = await signIn("credentials", {
-        email,
-        password: "password123",
-        redirect: false,
-      });
-      if (!res?.error) {
-        router.push("/dashboard");
-        router.refresh();
-      } else {
-        toast.error("Demo login failed. Have you seeded the database?");
-      }
-    } catch {
-      toast.error("Something went wrong.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div className="w-full max-w-md">
-      {/* Logo */}
-      <div className="flex items-center justify-center gap-2 mb-8">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-          <Zap className="h-5 w-5 text-primary" />
+    <div className="grid min-h-screen w-full lg:grid-cols-2">
+      {/* ── Brand panel ─────────────────────────────────────────────── */}
+      <div className="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#14122b] p-12 text-white">
+        <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-primary/20 blur-3xl" />
+        <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
+
+        <div className="relative flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Zap className="h-5 w-5" />
+          </div>
+          <span className="text-xl font-bold tracking-tight">Synchro</span>
         </div>
-        <span className="text-xl font-bold tracking-tight">Synchro</span>
+
+        <div className="relative space-y-8">
+          <h1 className="text-3xl font-semibold leading-tight tracking-tight max-w-md">
+            The IT system integrator workspace for delivery teams.
+          </h1>
+          <div className="space-y-5">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10">
+                  <f.icon className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">{f.title}</p>
+                  <p className="text-sm text-white/60">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="relative text-xs text-white/40">
+          © 2026 Synchro · Banking project delivery suite
+        </p>
       </div>
 
-      <Card className="shadow-sm">
-        <CardHeader className="space-y-1 pb-4">
-          <CardTitle className="text-xl">Welcome back</CardTitle>
-          <CardDescription>Sign in to your workspace</CardDescription>
-        </CardHeader>
-        <CardContent>
+      {/* ── Form panel ──────────────────────────────────────────────── */}
+      <div className="flex flex-col items-center justify-center px-6 py-12 sm:px-12">
+        {/* Mobile logo */}
+        <div className="mb-8 flex items-center gap-2 lg:hidden">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+            <Zap className="h-5 w-5 text-primary" />
+          </div>
+          <span className="text-xl font-bold tracking-tight">Synchro</span>
+        </div>
+
+        <div className="w-full max-w-sm">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold tracking-tight">Welcome back</h2>
+            <p className="text-sm text-muted-foreground mt-1">Sign in to your workspace to continue.</p>
+          </div>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="email">Email</Label>
@@ -114,7 +136,7 @@ export function LoginForm() {
                 id="email"
                 name="email"
                 type="email"
-                placeholder="reza@nexaintegra.id"
+                placeholder="admin@gmail.com"
                 autoComplete="email"
                 value={values.email}
                 onChange={handleChange}
@@ -127,7 +149,10 @@ export function LoginForm() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <span className="text-xs text-muted-foreground">Required</span>
+              </div>
               <div className="relative">
                 <Input
                   id="password"
@@ -166,46 +191,12 @@ export function LoginForm() {
             </Button>
           </form>
 
-          {/* Demo accounts */}
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Demo accounts</span>
-              </div>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs h-8"
-                onClick={() => handleDemoLogin("reza@nexaintegra.id")}
-                disabled={isLoading}
-              >
-                Admin (Reza)
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="text-xs h-8"
-                onClick={() => handleDemoLogin("dinda@nexaintegra.id")}
-                disabled={isLoading}
-              >
-                Member (Dinda)
-              </Button>
-            </div>
-            <p className="text-center text-xs text-muted-foreground mt-3">
-              Password semua akun: <code className="bg-muted px-1 rounded">password123</code>
-            </p>
+          <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Secured by role-based access control
           </div>
-        </CardContent>
-      </Card>
-
-      <p className="text-center text-xs text-muted-foreground mt-4">
-        By signing in, you agree to our Terms of Service and Privacy Policy.
-      </p>
+        </div>
+      </div>
     </div>
   );
 }

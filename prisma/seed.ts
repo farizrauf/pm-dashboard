@@ -32,13 +32,14 @@ async function main() {
   await prisma.user.deleteMany();
 
   const pw = await bcrypt.hash("password123", 12);
+  const adminPw = await bcrypt.hash("Global2025!!", 12);
 
   // ─── Users — Internal Team ──────────────────────────────────────────────────
   const reza = await prisma.user.create({
     data: {
-      name: "Reza Firmansyah",
-      email: "reza@nexaintegra.id",
-      password: pw,
+      name: "Admin",
+      email: "admin@gmail.com",
+      password: adminPw,
       role: UserRole.ADMIN,
       image: "https://api.dicebear.com/7.x/avataaars/svg?seed=reza",
     },
@@ -524,13 +525,7 @@ async function main() {
 
   console.log("\n✅ Database seeded — IT System Integrator (Banking Clients)!");
   console.log("\n📧 Akun login:");
-  console.log("  reza@nexaintegra.id   / password123  (Admin — PM utama)");
-  console.log("  dinda@nexaintegra.id  / password123  (Member — UI/UX + Mobile)");
-  console.log("  arif@nexaintegra.id   / password123  (Member — Backend Lead)");
-  console.log("  sari@nexaintegra.id   / password123  (Member — QA & Security)");
-  console.log("  bagas@nexaintegra.id  / password123  (Member — DevOps & API)");
-  console.log("  yuni@nexaintegra.id   / password123  (Member — Frontend)");
-  console.log("  eko@nexaintegra.id    / password123  (Member — Data & Infra)");
+  console.log("  admin@gmail.com   / Global2025!!  (Admin)");
   console.log("\n🏦 Klien:");
   console.log("  BRI  — Internet Banking Revamp (ACTIVE, Rp 4.5M)");
   console.log("  Mandiri — Open Banking API Gateway (ACTIVE, Rp 3.2M)");

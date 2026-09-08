@@ -377,6 +377,7 @@ model Invoice {
   dueAt       DateTime?
   paidAt      DateTime?
   notes       String?
+  image       String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 

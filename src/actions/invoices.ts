@@ -19,6 +19,7 @@ const invoiceSchema = z.object({
   issuedAt: z.string().optional(),
   dueAt: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
+  image: z.string().optional().nullable(),
   budgetId: z.string().min(1),
   items: z.array(invoiceItemSchema).optional(),
 });
@@ -59,7 +60,7 @@ export async function createInvoice(data: InvoiceFormData) {
   const parsed = invoiceSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
 
-  const { items, issuedAt, dueAt, ...rest } = parsed.data;
+  const { items, issuedAt, dueAt, image, ...rest } = parsed.data;
   const invoiceNo = await getNextInvoiceNo();
 
   const invoice = await prisma.invoice.create({
@@ -68,6 +69,7 @@ export async function createInvoice(data: InvoiceFormData) {
       invoiceNo,
       issuedAt: issuedAt ? new Date(issuedAt) : new Date(),
       dueAt: dueAt ? new Date(dueAt) : null,
+      image: image || null,
       items: items?.length
         ? { create: items }
         : undefined,
