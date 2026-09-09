@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTheme } from "next-themes";
-import { User, Lock, Palette, Bell, Globe, Loader2 } from "lucide-react";
+import { User, Lock, Palette, Bell, Globe, Loader2, Camera, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -224,11 +224,70 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
 function ProfileTab({ user }: { user: SettingsClientProps["user"] }) {
   const [isLoading, setIsLoading] = useState(false);
+  const [avatarLoading, setAvatarLoading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(user?.image ?? null);
   const t = useTranslations("settings");
   const [values, setValues] = useState({
     name: user?.name ?? "",
     email: user?.email ?? "",
   });
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+    if (file.size > 1.5 * 1024 * 1024) {
+      toast.error("Image must be under 1.5 MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = reader.result as string;
+      setPreview(dataUrl);
+      setAvatarLoading(true);
+      try {
+        const { updateAvatar } = await import("@/actions/settings");
+        const result = await updateAvatar(dataUrl);
+        if ("error" in result && result.error) {
+          toast.error(result.error);
+          setPreview(user?.image ?? null);
+        } else {
+          toast.success("Profile picture updated");
+        }
+      } catch {
+        toast.error("Failed to update picture");
+        setPreview(user?.image ?? null);
+      } finally {
+        setAvatarLoading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarLoading(true);
+    try {
+      const { updateAvatar } = await import("@/actions/settings");
+      // Reset to dicebear default
+      const defaultImage = `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(values.email)}`;
+      const result = await updateAvatar(defaultImage);
+      if ("error" in result && result.error) {
+        // fallback: just clear
+        await updateAvatar("");
+      }
+      setPreview(defaultImage);
+      toast.success("Profile picture removed");
+    } catch {
+      toast.error("Failed to remove picture");
+    } finally {
+      setAvatarLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -255,14 +314,65 @@ function ProfileTab({ user }: { user: SettingsClientProps["user"] }) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16">
-              <AvatarImage src={user?.image ?? ""} />
-              <AvatarFallback className="text-lg">{getInitials(user?.name)}</AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="text-sm font-medium">{user?.name}</p>
+          {/* Avatar section */}
+          <div className="flex items-center gap-5">
+            <div className="relative group">
+              <Avatar className="h-20 w-20">
+                <AvatarImage src={preview ?? ""} />
+                <AvatarFallback className="text-xl">{getInitials(values.name || user?.name)}</AvatarFallback>
+              </Avatar>
+              {/* Overlay on hover */}
+              <label
+                className={`absolute inset-0 flex items-center justify-center rounded-full cursor-pointer transition-all
+                  bg-black/50 opacity-0 group-hover:opacity-100
+                  ${avatarLoading ? "opacity-100 pointer-events-none" : ""}`}
+              >
+                {avatarLoading ? (
+                  <Loader2 className="h-5 w-5 text-white animate-spin" />
+                ) : (
+                  <div className="flex flex-col items-center gap-0.5">
+                    <Camera className="h-5 w-5 text-white" />
+                    <span className="text-[9px] text-white font-medium">Change</span>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                  disabled={avatarLoading}
+                />
+              </label>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <p className="text-sm font-semibold">{values.name || user?.name}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <label className="cursor-pointer">
+                  <span className="inline-flex items-center gap-1.5 h-7 px-3 rounded-md border border-border bg-background text-xs font-medium hover:bg-accent transition-colors">
+                    <Upload className="h-3 w-3" /> Upload Photo
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                    disabled={avatarLoading}
+                  />
+                </label>
+                {preview && preview !== "" && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveAvatar}
+                    disabled={avatarLoading}
+                    className="h-7 px-3 rounded-md border border-border bg-background text-xs font-medium text-destructive hover:bg-destructive/5 transition-colors disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              <p className="text-[11px] text-muted-foreground">JPG, PNG, GIF up to 1.5 MB</p>
             </div>
           </div>
 
