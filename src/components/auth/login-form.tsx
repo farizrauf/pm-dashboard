@@ -48,12 +48,15 @@ export function LoginForm() {
       });
       if (res?.error) {
         toast.error("Invalid email or password");
-      } else {
+      } else if (res?.ok) {
         router.push("/dashboard");
         router.refresh();
+      } else {
+        toast.error("Login failed. Please try again.");
       }
-    } catch {
-      toast.error("Something went wrong. Please try again.");
+    } catch (err) {
+      console.error("Login error:", err);
+      toast.error("Connection error. Please check your internet and try again.");
     } finally {
       setIsLoading(false);
     }
