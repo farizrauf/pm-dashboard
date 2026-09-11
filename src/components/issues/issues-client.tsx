@@ -172,15 +172,15 @@ export function IssuesClient({ issues: initial, projects }: { issues: Issue[]; p
           <p className="text-sm text-muted-foreground mt-1">Report issues to track bugs and blockers.</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-border overflow-hidden bg-card">
-          <div className="grid grid-cols-[minmax(0,1fr)_100px_110px_120px_40px] gap-2 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
+        <div className="rounded-xl border border-border overflow-x-auto bg-card">
+          <div className="min-w-[380px] grid grid-cols-[minmax(0,1fr)_100px_110px_120px_40px] gap-2 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
             <span>Issue</span><span>Severity</span><span>Status</span><span>Created</span><span />
           </div>
           {filtered.map((issue) => {
             const statusCfg = STATUS_CONFIG[issue.status];
             const StatusIcon = statusCfg?.icon ?? AlertCircle;
             return (
-              <div key={issue.id} className="grid grid-cols-[minmax(0,1fr)_100px_110px_120px_40px] gap-2 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/20 transition-colors group items-center">
+              <div key={issue.id} className="min-w-[380px] grid grid-cols-[minmax(0,1fr)_100px_110px_120px_40px] gap-2 px-4 py-3 border-b border-border last:border-0 last:rounded-b-xl hover:bg-accent/20 transition-colors group items-center">
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{issue.title}</p>
                   <div className="flex items-center gap-1 mt-0.5">

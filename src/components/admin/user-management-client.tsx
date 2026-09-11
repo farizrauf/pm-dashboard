@@ -193,7 +193,7 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
       </div>
 
       {/* Stats strip */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         {[
           { label: "Total Users", value: initialUsers.length },
           { label: "Admins", value: initialUsers.filter((u) => u.role === "ADMIN").length },
@@ -214,9 +214,9 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
           <p className="text-sm text-muted-foreground mt-1">Try a different search term.</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-border overflow-hidden bg-card">
+        <div className="rounded-xl border border-border overflow-x-auto bg-card">
           {/* Header */}
-          <div className="grid grid-cols-[minmax(0,1fr)_120px_100px_100px_80px_40px] gap-3 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
+          <div className="min-w-[440px] grid grid-cols-[minmax(0,1fr)_120px_100px_100px_80px_40px] gap-3 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
             <span>User</span>
             <span>Role</span>
             <span>Tasks</span>
@@ -231,7 +231,7 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
             return (
               <div
                 key={user.id}
-                className="grid grid-cols-[minmax(0,1fr)_120px_100px_100px_80px_40px] gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/30 transition-colors items-center group"
+                className="min-w-[440px] grid grid-cols-[minmax(0,1fr)_120px_100px_100px_80px_40px] gap-3 px-4 py-3 border-b border-border last:border-0 last:rounded-b-xl hover:bg-accent/30 transition-colors items-center group"
               >
                 {/* User info */}
                 <div className="flex items-center gap-2.5 min-w-0">

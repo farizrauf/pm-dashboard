@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { Sidebar } from "@/components/layout/sidebar";
+import { MobileNavProvider } from "@/components/layout/mobile-nav";
 import { SessionProvider } from "next-auth/react";
 
 export default async function DashboardLayout({
@@ -16,12 +16,7 @@ export default async function DashboardLayout({
 
   return (
     <SessionProvider session={session}>
-      <div className="flex h-screen bg-background overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
-      </div>
+      <MobileNavProvider>{children}</MobileNavProvider>
     </SessionProvider>
   );
 }

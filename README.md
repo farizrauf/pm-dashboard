@@ -4,7 +4,7 @@ A production-ready fullstack Project Management SaaS built with Next.js 15, Type
 
 ---
 
-## Tech Stack
+## Tech Stack 
 
 | Layer | Technology |
 |-------|-----------|
@@ -296,3 +296,6 @@ openssl rand -base64 32
 # Atau pakai npx
 npx auth secret
 ```
+
+
+

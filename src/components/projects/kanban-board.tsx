@@ -179,7 +179,7 @@ export function KanbanBoard({ tasks: initialTasks, members, projectId, onRefresh
 
         <DragOverlay>
           {activeTask && (
-            <div className="bg-card rounded-lg p-3 border border-primary/30 shadow-xl rotate-1 w-72">
+            <div className="bg-card rounded-lg p-3 border border-primary/30 shadow-xl rotate-1 w-64 sm:w-72">
               <p className="text-sm font-medium">{activeTask.title}</p>
               <div className="flex items-center gap-2 mt-2">
                 <PriorityBadge priority={activeTask.priority} />
@@ -236,7 +236,7 @@ function KanbanColumn({ column, tasks, onAdd, onEdit, onDelete }: {
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   return (
-    <div className="flex flex-col shrink-0 w-72">
+    <div className="flex flex-col shrink-0 w-64 sm:w-72">
       <div className="flex items-center justify-between mb-3 px-1">
         <div className="flex items-center gap-2">
           <span className={cn("h-2 w-2 rounded-full", column.dotClass)} />

@@ -148,15 +148,15 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
           <p className="text-sm text-muted-foreground mt-1">Create your first invoice.</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-border overflow-hidden bg-card">
-          <div className="grid grid-cols-[80px_minmax(0,1fr)_130px_110px_100px_110px_40px] gap-2 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
+        <div className="rounded-xl border border-border overflow-x-auto bg-card">
+          <div className="min-w-[620px] grid grid-cols-[80px_minmax(0,1fr)_130px_110px_100px_110px_40px] gap-2 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
             <span>No.</span><span>Title</span><span>Project</span><span>Status</span><span className="text-right">Amount</span><span>Due</span><span />
           </div>
           {filtered.map((inv) => {
             const cfg = STATUS_CONFIG[inv.status];
             const Icon = cfg.icon;
             return (
-              <div key={inv.id} className="grid grid-cols-[80px_minmax(0,1fr)_130px_110px_100px_110px_40px] gap-2 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/20 transition-colors group items-center">
+              <div key={inv.id} className="min-w-[620px] grid grid-cols-[80px_minmax(0,1fr)_130px_110px_100px_110px_40px] gap-2 px-4 py-3 border-b border-border last:border-0 last:rounded-b-xl hover:bg-accent/20 transition-colors group items-center">
                 <span className="text-xs font-mono text-muted-foreground">{inv.invoiceNo}</span>
                 <div className="flex items-center gap-2 min-w-0">
                   {inv.image ? (

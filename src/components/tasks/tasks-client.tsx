@@ -370,9 +370,9 @@ export function TasksClient({ initialTasks, total: _total, pages, projects, sear
               <p className="text-sm text-muted-foreground mt-1">{t("noTasksHint")}</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-border overflow-hidden bg-card">
+            <div className="rounded-xl border border-border overflow-x-auto bg-card">
               {/* Table header */}
-              <div className="grid grid-cols-[32px_minmax(0,1fr)_120px_100px_120px_120px_40px] gap-2 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
+              <div className="min-w-[560px] grid grid-cols-[32px_minmax(0,1fr)_120px_100px_120px_120px_40px] gap-2 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
                 <Checkbox
                   checked={allSelected}
                   onCheckedChange={toggleAll}
@@ -399,7 +399,7 @@ export function TasksClient({ initialTasks, total: _total, pages, projects, sear
                 <div
                   key={task.id}
                   className={cn(
-                    "grid grid-cols-[32px_minmax(0,1fr)_120px_100px_120px_120px_40px] gap-2 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/30 transition-colors group items-center",
+                    "min-w-[560px] grid grid-cols-[32px_minmax(0,1fr)_120px_100px_120px_120px_40px] gap-2 px-4 py-3 border-b border-border last:border-0 last:rounded-b-xl hover:bg-accent/30 transition-colors group items-center",
                     selectedIds.has(task.id) && "bg-primary/5"
                   )}
                 >

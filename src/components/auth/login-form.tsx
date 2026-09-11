@@ -65,7 +65,7 @@ export function LoginForm() {
   return (
     /* Outer wrapper — slightly smaller max-width, less rounded */
     <div className="w-full max-w-4xl">
-      <div className="flex rounded-xl shadow-xl overflow-hidden bg-white" style={{ minHeight: 520 }}>
+      <div className="flex rounded-xl shadow-xl overflow-hidden bg-white" style={{ minHeight: "min(520px, calc(100vh - 2rem))" }}>
 
         {/* ─── LEFT: Form ─────────────────────────────────────────── */}
         <div className="w-full md:w-[42%] flex flex-col px-8 py-8">

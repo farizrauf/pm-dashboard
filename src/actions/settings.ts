@@ -63,7 +63,7 @@ export async function updateAvatar(imageDataUrl: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  // Empty string → clear picture (show initials fallback)
+    // Empty string → clear picture (show initials fallback)
   if (imageDataUrl === "") {
     await prisma.user.update({
       where: { id: session.user.id },

@@ -52,7 +52,7 @@ export function TeamClient({ members }: TeamClientProps) {
       </div>
 
       {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground">Total Members</p>

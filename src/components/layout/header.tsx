@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Moon, Sun, Search, X, CheckCircle2, Clock, AlertCircle, FolderKanban } from "lucide-react";
+import { Bell, Moon, Sun, Search, X, CheckCircle2, Clock, AlertCircle, FolderKanban, Menu } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useMobileNav } from "@/components/layout/mobile-nav";
 
 interface HeaderProps {
   title: string;
@@ -169,9 +170,22 @@ export function Header({ title, description, actions }: HeaderProps) {
   const markAllRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   const markRead = (id: string) => setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
 
+  const { setOpen } = useMobileNav();
+
   return (
     <TooltipProvider>
-      <header className="flex h-14 items-center justify-between border-b border-border bg-card/50 px-6 backdrop-blur-sm sticky top-0 z-10">
+      <header className="flex h-14 items-center gap-2 border-b border-border bg-card/50 px-4 md:px-6 backdrop-blur-sm sticky top-0 z-10">
+        {/* Mobile hamburger — only shown on small screens */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden h-8 w-8 shrink-0"
+          onClick={() => setOpen(true)}
+          aria-label="Open menu"
+        >
+          <Menu className="h-4 w-4" />
+        </Button>
+
         <div className="flex flex-col justify-center">
           <h1 className="text-base font-semibold leading-none">{title}</h1>
           {description && (

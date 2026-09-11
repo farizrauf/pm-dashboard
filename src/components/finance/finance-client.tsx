@@ -184,12 +184,12 @@ export function FinanceClient({ projects }: { projects: Project[] }) {
                   ) : budget.expenses.length === 0 ? (
                     <p className="text-xs text-muted-foreground text-center py-6">No expenses recorded.</p>
                   ) : (
-                    <div>
-                      <div className="grid grid-cols-[minmax(0,1fr)_100px_90px_120px_32px] gap-2 px-4 py-2 bg-muted/20 text-xs font-medium text-muted-foreground border-b border-border">
+                    <div className="overflow-x-auto">
+                      <div className="min-w-[420px] grid grid-cols-[minmax(0,1fr)_100px_90px_120px_32px] gap-2 px-4 py-2 bg-muted/20 text-xs font-medium text-muted-foreground border-b border-border">
                         <span>Expense</span><span>Category</span><span className="text-right">Amount</span><span>Date</span><span />
                       </div>
                       {budget.expenses.map((exp) => (
-                        <div key={exp.id} className="grid grid-cols-[minmax(0,1fr)_100px_90px_120px_32px] gap-2 px-4 py-2.5 border-b border-border last:border-0 hover:bg-accent/10 items-center group">
+                        <div key={exp.id} className="min-w-[420px] grid grid-cols-[minmax(0,1fr)_100px_90px_120px_32px] gap-2 px-4 py-2.5 border-b border-border last:border-0 hover:bg-accent/10 items-center group">
                           <div className="min-w-0">
                             <p className="text-sm truncate">{exp.title}</p>
                             {exp.description && <p className="text-xs text-muted-foreground truncate">{exp.description}</p>}

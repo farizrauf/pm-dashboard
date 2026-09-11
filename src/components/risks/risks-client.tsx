@@ -177,15 +177,15 @@ export function RisksClient({ risks: initial, projects }: { risks: Risk[]; proje
           <p className="text-sm text-muted-foreground mt-1">Track potential risks to keep projects on track.</p>
         </div>
       ) : (
-        <div className="rounded-xl border border-border overflow-hidden bg-card">
-          <div className="grid grid-cols-[minmax(0,1fr)_90px_90px_100px_120px_40px] gap-2 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
+        <div className="rounded-xl border border-border overflow-x-auto bg-card">
+          <div className="min-w-[430px] grid grid-cols-[minmax(0,1fr)_90px_90px_100px_120px_40px] gap-2 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
             <span>Risk</span><span>Severity</span><span>Probability</span><span>Score</span><span>Status</span><span />
           </div>
           {filtered.map((r) => {
             const score = riskScore(r);
             const scoreColor = score >= 12 ? "text-red-600 font-bold" : score >= 6 ? "text-amber-600 font-semibold" : "text-muted-foreground";
             return (
-              <div key={r.id} className="grid grid-cols-[minmax(0,1fr)_90px_90px_100px_120px_40px] gap-2 px-4 py-3 border-b border-border last:border-0 hover:bg-accent/20 transition-colors group items-center">
+              <div key={r.id} className="min-w-[430px] grid grid-cols-[minmax(0,1fr)_90px_90px_100px_120px_40px] gap-2 px-4 py-3 border-b border-border last:border-0 last:rounded-b-xl hover:bg-accent/20 transition-colors group items-center">
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{r.title}</p>
                   <div className="flex items-center gap-1 mt-0.5">

@@ -22,6 +22,7 @@ import {
   ShieldAlert,
   AlertCircle,
   Cpu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -32,12 +33,23 @@ import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
 
-export function Sidebar() {
+type SidebarProps = {
+  /** "desktop" = inline sidebar in layout (hidden < md). "mobile" = full-height drawer. */
+  mode?: "desktop" | "mobile";
+  /** Called when the user wants to close the mobile drawer. */
+  onClose?: () => void;
+};
+
+export function Sidebar({ mode = "desktop", onClose }: SidebarProps = {}) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const t = useTranslations("nav");
   const { data: session } = useSession();
   const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
+
+  // Collapse toggle only makes sense in desktop mode
+  const canToggleCollapse = mode === "desktop";
+  const isCollapsed = canToggleCollapse && collapsed;
 
 // prefetch semua nav links saat sidebar mount
 const navItems = [
@@ -65,9 +77,14 @@ const navItems = [
       <aside
         style={{ background: "hsl(var(--sidebar-bg))" }}
         className={cn(
-          "relative flex h-screen flex-col transition-all duration-300 ease-in-out shrink-0",
-          "border-r",
-          collapsed ? "w-[60px]" : "w-[220px]"
+          "relative flex flex-col border-r transition-all duration-300 ease-in-out shrink-0",
+          // Desktop sidebar: hidden on mobile, shown on md+
+          mode === "desktop" && [
+            "hidden md:flex h-screen",
+            isCollapsed ? "w-[60px]" : "w-[220px]",
+          ],
+          // Mobile drawer
+          mode === "mobile" && "fixed inset-y-0 left-0 z-50 w-[280px] h-full shadow-2xl"
         )}
       >
         {/* Right border accent line for extra visual separation */}
@@ -76,23 +93,37 @@ const navItems = [
           style={{ background: "hsl(var(--sidebar-border))" }}
         />
 
-        {/* Collapse toggle */}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          style={{
-            background: "hsl(var(--sidebar-hover-bg))",
-            color: "hsl(var(--sidebar-fg))",
-            borderColor: "hsl(var(--sidebar-border))",
-          }}
-          className="absolute -right-3 top-6 z-10 flex h-6 w-6 items-center justify-center rounded-full border shadow-md transition-colors hover:opacity-90"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-3 w-3" />
-          ) : (
-            <ChevronLeft className="h-3 w-3" />
-          )}
-        </button>
+        {/* Mobile close button */}
+        {mode === "mobile" && onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-3 z-10 flex h-7 w-7 items-center justify-center rounded-md hover:bg-white/10 transition-colors"
+            style={{ color: "hsl(var(--sidebar-fg-muted))" }}
+            aria-label="Close menu"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+
+        {/* Desktop collapse toggle — only in desktop mode */}
+        {mode === "desktop" && (
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            style={{
+              background: "hsl(var(--sidebar-hover-bg))",
+              color: "hsl(var(--sidebar-fg))",
+              borderColor: "hsl(var(--sidebar-border))",
+            }}
+            className="absolute -right-3 top-6 z-10 flex h-6 w-6 items-center justify-center rounded-full border shadow-md transition-colors hover:opacity-90"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? (
+              <ChevronRight className="h-3 w-3" />
+            ) : (
+              <ChevronLeft className="h-3 w-3" />
+            )}
+          </button>
+        )}
 
         {/* Logo / Workspace */}
         <div
