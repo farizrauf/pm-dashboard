@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   Plus, Search, List, Grid3x3, MoreHorizontal, Trash2, Pencil,
   ChevronUp, ChevronDown, ChevronsUpDown,
-  Upload, X, RefreshCw,
+  Upload, X, RefreshCw, Paperclip,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,7 @@ type Task = {
   assignee?: { id: string; name: string | null; image: string | null } | null;
   project?: { id: string; name: string; color: string } | null;
   labels?: { label: { id: string; name: string; color: string } }[];
-  _count?: { comments: number };
+  _count?: { comments: number; documents?: number };
 };
 
 interface TasksClientProps {
@@ -417,6 +417,11 @@ export function TasksClient({ initialTasks, total: _total, pages, projects, sear
                       <span className={cn("text-sm font-medium truncate", task.status === "DONE" && "line-through text-muted-foreground")}>
                         {task.title}
                       </span>
+                      {!!task._count?.documents && (
+                        <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground shrink-0" title={`${task._count.documents} document(s)`}>
+                          <Paperclip className="h-3 w-3" /> {task._count.documents}
+                        </span>
+                      )}
                     </div>
                     {task.project && (
                       <p className="text-xs text-muted-foreground mt-0.5 ml-3.5">{task.project.name}</p>

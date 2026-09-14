@@ -141,6 +141,7 @@ model Task {
   comments   Comment[]
   labels     TaskLabel[]
   activities Activity[]
+  documents  TaskDocument[]
 
   @@index([status])
   @@index([priority])
@@ -148,6 +149,21 @@ model Task {
   @@index([assigneeId])
   @@index([dueDate])
   @@map("tasks")
+}
+
+model TaskDocument {
+  id        String   @id @default(cuid())
+  taskId    String
+  name      String
+  mimeType  String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("task_documents")
 }
 
 model Label {

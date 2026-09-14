@@ -1,14 +1,19 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Eye, FileText, Loader2, Paperclip, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createTask, updateTask, type TaskFormData } from "@/actions/tasks";
+import { DocumentPreview, type DocumentMeta } from "@/components/tasks/document-preview";
 import { toast } from "sonner";
+import { formatBytes } from "@/lib/utils";
+
+const MAX_DOC_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_DOCS = 10;
 
 interface TaskFormProps {
   projectId?: string;
@@ -45,6 +50,102 @@ export function TaskForm({ projectId, task, members = [], projects = [], default
     selectedProjectId: projectId ?? task?.project?.id ?? "",
   });
 
+  // ─── Documents ────────────────────────────────────────────────────────────
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [savedDocs, setSavedDocs] = useState<DocumentMeta[]>([]);
+  const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ doc: DocumentMeta; src: string } | null>(null);
+  const previewObjectUrl = useRef<string | null>(null);
+
+  const fetchSavedDocs = useCallback(async () => {
+    if (!task?.id) {
+      setSavedDocs([]);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/documents`);
+      if (res.ok) {
+        const json = await res.json();
+        setSavedDocs(json.documents ?? []);
+      }
+    } catch {
+      // ignore — list simply stays empty
+    }
+  }, [task?.id]);
+
+  useEffect(() => {
+    fetchSavedDocs();
+  }, [fetchSavedDocs]);
+
+  const handleFilesSelected = (files: FileList | null) => {
+    if (!files?.length) return;
+    const accepted: File[] = [];
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_DOC_SIZE) {
+        toast.error(`"${file.name}" is too large. Max ${formatBytes(MAX_DOC_SIZE)}.`);
+        continue;
+      }
+      accepted.push(file);
+    }
+    if (!accepted.length) return;
+    setPendingFiles((prev) => {
+      const next = [...prev, ...accepted];
+      if (next.length + savedDocs.length > MAX_DOCS) {
+        toast.error(`Maximum ${MAX_DOCS} documents per task`);
+        return next.slice(0, Math.max(0, MAX_DOCS - savedDocs.length));
+      }
+      return next;
+    });
+  };
+
+  const openPendingPreview = (file: File) => {
+    const url = URL.createObjectURL(file);
+    previewObjectUrl.current = url;
+    setPreview({
+      doc: { id: `local-${file.name}`, name: file.name, mimeType: file.type || "application/octet-stream", size: file.size },
+      src: url,
+    });
+  };
+
+  const closePreview = (open: boolean) => {
+    if (!open) {
+      setPreview(null);
+      if (previewObjectUrl.current) {
+        URL.revokeObjectURL(previewObjectUrl.current);
+        previewObjectUrl.current = null;
+      }
+    }
+  };
+
+  const deleteSavedDoc = async (docId: string) => {
+    setDeletingDocId(docId);
+    try {
+      const res = await fetch(`/api/task-documents/${docId}`, { method: "DELETE" });
+      if (res.ok) {
+        setSavedDocs((prev) => prev.filter((d) => d.id !== docId));
+        toast.success("Document removed");
+      } else {
+        toast.error("Failed to remove document");
+      }
+    } catch {
+      toast.error("Failed to remove document");
+    } finally {
+      setDeletingDocId(null);
+    }
+  };
+
+  const uploadPendingFiles = async (taskId: string) => {
+    if (!pendingFiles.length) return;
+    const form = new FormData();
+    pendingFiles.forEach((f) => form.append("files", f));
+    const res = await fetch(`/api/tasks/${taskId}/documents`, { method: "POST", body: form });
+    if (!res.ok) {
+      const json = await res.json().catch(() => null);
+      throw new Error(json?.error || "Document upload failed");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!values.title.trim()) {
@@ -69,10 +170,21 @@ export function TaskForm({ projectId, task, members = [], projects = [], default
 
       if ("error" in result && result.error) {
         toast.error(result.error);
-      } else {
-        toast.success(task ? "Task updated" : "Task created");
-        onSuccess?.();
+        return;
       }
+
+      // Attach uploaded documents to the (new or existing) task
+      const taskId = task?.id ?? ("task" in result ? (result.task as { id: string }).id : null);
+      if (taskId && pendingFiles.length) {
+        try {
+          await uploadPendingFiles(taskId);
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Documents failed to upload");
+        }
+      }
+
+      toast.success(task ? "Task updated" : "Task created");
+      onSuccess?.();
     } catch {
       toast.error("Something went wrong");
     } finally {
@@ -180,6 +292,99 @@ export function TaskForm({ projectId, task, members = [], projects = [], default
         </div>
       </div>
 
+      {/* Documents */}
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between">
+          <Label className="flex items-center gap-1.5">
+            <Paperclip className="h-3.5 w-3.5 text-muted-foreground" /> Documents
+          </Label>
+          <span className="text-[10px] text-muted-foreground">
+            max {MAX_DOCS} files · {formatBytes(MAX_DOC_SIZE)} each
+          </span>
+        </div>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            handleFilesSelected(e.target.files);
+            e.target.value = "";
+          }}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="w-full h-8 text-xs border-dashed gap-1.5 font-normal text-muted-foreground"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={pendingFiles.length + savedDocs.length >= MAX_DOCS}
+        >
+          <Upload className="h-3.5 w-3.5" /> Attach documents
+        </Button>
+
+        {(savedDocs.length > 0 || pendingFiles.length > 0) && (
+          <ul className="space-y-1 pt-0.5">
+            {savedDocs.map((doc) => (
+              <li key={doc.id} className="flex items-center gap-2 rounded-md border border-border px-2 py-1.5 bg-muted/20">
+                <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <span className="text-xs truncate flex-1">{doc.name}</span>
+                <span className="text-[10px] text-muted-foreground shrink-0">{formatBytes(doc.size)}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0"
+                  title="Preview"
+                  onClick={() => setPreview({ doc, src: `/api/task-documents/${doc.id}` })}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0 text-destructive hover:text-destructive"
+                  title="Remove document"
+                  onClick={() => deleteSavedDoc(doc.id)}
+                  disabled={deletingDocId === doc.id}
+                >
+                  {deletingDocId === doc.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                </Button>
+              </li>
+            ))}
+            {pendingFiles.map((file, i) => (
+              <li key={`${file.name}-${i}`} className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5">
+                <FileText className="h-3.5 w-3.5 shrink-0 text-primary" />
+                <span className="text-xs truncate flex-1">{file.name}</span>
+                <span className="text-[10px] text-muted-foreground shrink-0">{formatBytes(file.size)}</span>
+                <span className="text-[10px] text-primary shrink-0">new</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0"
+                  title="Preview"
+                  onClick={() => openPendingPreview(file)}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 shrink-0 text-destructive hover:text-destructive"
+                  title="Remove"
+                  onClick={() => setPendingFiles((prev) => prev.filter((_, j) => j !== i))}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       <div className="flex gap-2 pt-1">
         <Button type="submit" size="sm" disabled={isLoading}>
           {isLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin" />{task ? "Saving..." : "Creating..."}</> : task ? "Save" : "Create Task"}
@@ -190,6 +395,13 @@ export function TaskForm({ projectId, task, members = [], projects = [], default
           </Button>
         )}
       </div>
+
+      <DocumentPreview
+        open={!!preview}
+        onOpenChange={closePreview}
+        document={preview?.doc ?? null}
+        src={preview?.src ?? null}
+      />
     </form>
   );
 }

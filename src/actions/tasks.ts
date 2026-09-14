@@ -200,7 +200,7 @@ export async function getTasks({
         assignee: { select: { id: true, name: true, image: true } },
         project: { select: { id: true, name: true, color: true } },
         labels: { include: { label: true } },
-        _count: { select: { comments: true } },
+        _count: { select: { comments: true, documents: true } },
       },
       orderBy: [{ position: "asc" }, { createdAt: "desc" }],
       skip: (page - 1) * limit,
