@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { NotificationType } from "@prisma/client";
+import { notifyProjectMembers } from "@/lib/notifications";
 
 const milestoneSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -47,6 +49,20 @@ export async function updateMilestone(id: string, data: Partial<z.infer<typeof m
       completedAt: rest.status === "COMPLETED" ? new Date() : undefined,
     },
   });
+
+  if (rest.status === "COMPLETED") {
+    try {
+      await notifyProjectMembers(milestone.projectId, {
+        type: NotificationType.MILESTONE,
+        title: "Milestone completed",
+        body: milestone.title,
+        href: "/milestones",
+        actorId: session.user.id,
+      });
+    } catch (error) {
+      console.error("Failed to create milestone notification", error);
+    }
+  }
 
   revalidatePath(`/projects/${milestone.projectId}`);
   return { success: true, milestone };

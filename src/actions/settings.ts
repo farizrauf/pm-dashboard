@@ -58,37 +58,3 @@ export async function updatePassword(data: z.infer<typeof passwordSchema>) {
 
   return { success: true };
 }
-
-export async function updateAvatar(imageDataUrl: string) {
-  const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
-
-    // Empty string → clear picture (show initials fallback)
-  if (imageDataUrl === "") {
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { image: null },
-    });
-    revalidatePath("/settings");
-    revalidatePath("/dashboard");
-    return { success: true };
-  }
-
-  if (!imageDataUrl.startsWith("data:image/")) {
-    return { error: "Invalid image format" };
-  }
-
-  // ~2 MB base64 ≈ 1.5 MB actual
-  if (imageDataUrl.length > 2_500_000) {
-    return { error: "Image too large. Please use an image under 1.5 MB." };
-  }
-
-  await prisma.user.update({
-    where: { id: session.user.id },
-    data: { image: imageDataUrl },
-  });
-
-  revalidatePath("/settings");
-  revalidatePath("/dashboard");
-  return { success: true };
-}

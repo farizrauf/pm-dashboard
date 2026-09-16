@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { NotificationType } from "@prisma/client";
+import { notifyProjectMembers } from "@/lib/notifications";
 
 const issueSchema = z.object({
   title: z.string().min(1).max(200),
@@ -36,6 +38,19 @@ export async function createIssue(data: IssueFormData) {
   const parsed = issueSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
   const issue = await prisma.issue.create({ data: parsed.data });
+  if (issue.severity === "CRITICAL" || issue.severity === "HIGH") {
+    try {
+      await notifyProjectMembers(issue.projectId, {
+        type: NotificationType.ISSUE,
+        title: "High-severity issue reported",
+        body: issue.title,
+        href: "/issues",
+        actorId: session.user.id,
+      });
+    } catch (error) {
+      console.error("Failed to create issue notification", error);
+    }
+  }
   revalidatePath("/issues");
   revalidatePath(`/projects/${parsed.data.projectId}`);
   return { success: true, issue };

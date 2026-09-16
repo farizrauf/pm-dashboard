@@ -30,6 +30,7 @@ import { ExportButton } from "@/components/shared/export-button";
 import { ImportDialog } from "@/components/shared/import-dialog";
 import { toast } from "sonner";
 import { getInitials, formatDate } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 type UserRow = {
   id: string;
@@ -45,10 +46,10 @@ interface UserManagementClientProps {
   users: UserRow[];
 }
 
-const ROLE_CONFIG: Record<string, { label: string; icon: React.ElementType; variant: "default" | "destructive" | "secondary" | "outline" | "success" | "warning" | "info" }> = {
-  ADMIN:  { label: "Admin",  icon: Shield, variant: "destructive" },
-  MEMBER: { label: "Member", icon: User,   variant: "default" },
-  VIEWER: { label: "Viewer", icon: Eye,    variant: "secondary" },
+const ROLE_CONFIG: Record<string, { labelKey: "roleAdmin" | "roleMember" | "roleViewer"; icon: React.ElementType; variant: "default" | "destructive" | "secondary" | "outline" | "success" | "warning" | "info" }> = {
+  ADMIN:  { labelKey: "roleAdmin",  icon: Shield, variant: "destructive" },
+  MEMBER: { labelKey: "roleMember", icon: User,   variant: "default" },
+  VIEWER: { labelKey: "roleViewer", icon: Eye,    variant: "secondary" },
 };
 
 type FormMode = "create" | "edit" | "reset-password";
@@ -56,6 +57,7 @@ type FormMode = "create" | "edit" | "reset-password";
 const emptyForm = { name: "", email: "", password: "", confirmPassword: "", role: "MEMBER" };
 
 export function UserManagementClient({ users: initialUsers }: UserManagementClientProps) {
+  const t = useTranslations("admin");
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
@@ -97,11 +99,11 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
   const handleSubmit = async () => {
     if (formMode === "create") {
       if (!formValues.name.trim() || !formValues.email.trim() || !formValues.password) {
-        toast.error("Name, email and password are required");
+        toast.error(t("requiredUserFields"));
         return;
       }
       if (formValues.password !== formValues.confirmPassword) {
-        toast.error("Passwords do not match");
+        toast.error(t("passwordMismatch"));
         return;
       }
       setLoading(true);
@@ -113,17 +115,17 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
       });
       setLoading(false);
       if ("error" in res && res.error) { toast.error(res.error); return; }
-      toast.success("User created");
+      toast.success(t("userCreated"));
       setFormOpen(false);
       router.refresh();
 
     } else if (formMode === "edit" && editingUser) {
       if (!formValues.name.trim() || !formValues.email.trim()) {
-        toast.error("Name and email are required");
+        toast.error(t("requiredNameEmail"));
         return;
       }
       if (formValues.password && formValues.password !== formValues.confirmPassword) {
-        toast.error("Passwords do not match");
+        toast.error(t("passwordMismatch"));
         return;
       }
       setLoading(true);
@@ -135,24 +137,24 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
       });
       setLoading(false);
       if ("error" in res && res.error) { toast.error(res.error); return; }
-      toast.success("User updated");
+      toast.success(t("userUpdated"));
       setFormOpen(false);
       router.refresh();
 
     } else if (formMode === "reset-password" && editingUser) {
       if (!formValues.password || formValues.password.length < 8) {
-        toast.error("Password must be at least 8 characters");
+        toast.error(t("passwordMinLength"));
         return;
       }
       if (formValues.password !== formValues.confirmPassword) {
-        toast.error("Passwords do not match");
+        toast.error(t("passwordMismatch"));
         return;
       }
       setLoading(true);
       const res = await resetUserPassword(editingUser.id, formValues.password);
       setLoading(false);
       if ("error" in res && res.error) { toast.error(res.error); return; }
-      toast.success("Password reset successfully");
+      toast.success(t("passwordReset"));
       setFormOpen(false);
     }
   };
@@ -163,7 +165,7 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
     const res = await deleteUser(deleteTarget.id);
     setLoading(false);
     if ("error" in res && res.error) { toast.error(res.error); return; }
-    toast.success("User deleted");
+    toast.success(t("userDeleted"));
     setDeleteTarget(null);
     router.refresh();
   };
@@ -175,7 +177,7 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search users..."
+            placeholder={t("searchPlaceholder")}
             className="pl-8 h-8 text-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -183,11 +185,11 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
         </div>
         <div className="flex items-center gap-2 ml-auto">
           <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setImportOpen(true)}>
-            <Upload className="h-3.5 w-3.5" /> Import Users
+            <Upload className="h-3.5 w-3.5" /> {t("importUsers")}
           </Button>
           <ExportButton type="users" />
           <Button size="sm" className="h-8 gap-1.5" onClick={openCreate}>
-            <Plus className="h-3.5 w-3.5" /> Add User
+            <Plus className="h-3.5 w-3.5" /> {t("addUser")}
           </Button>
         </div>
       </div>
@@ -195,9 +197,9 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
       {/* Stats strip */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         {[
-          { label: "Total Users", value: initialUsers.length },
-          { label: "Admins", value: initialUsers.filter((u) => u.role === "ADMIN").length },
-          { label: "Members", value: initialUsers.filter((u) => u.role === "MEMBER").length },
+          { label: t("totalUsersLabel"), value: initialUsers.length },
+          { label: t("adminsLabel"), value: initialUsers.filter((u) => u.role === "ADMIN").length },
+          { label: t("membersLabel"), value: initialUsers.filter((u) => u.role === "MEMBER").length },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-border bg-card p-4">
             <p className="text-2xl font-bold">{s.value}</p>
@@ -210,18 +212,18 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <User className="h-10 w-10 text-muted-foreground mb-3" />
-          <p className="text-base font-medium">No users found</p>
-          <p className="text-sm text-muted-foreground mt-1">Try a different search term.</p>
+          <p className="text-base font-medium">{t("noUsers")}</p>
+          <p className="text-sm text-muted-foreground mt-1">{t("tryDifferentSearch")}</p>
         </div>
       ) : (
         <div className="rounded-xl border border-border overflow-x-auto bg-card">
           {/* Header */}
           <div className="min-w-[440px] grid grid-cols-[minmax(0,1fr)_120px_100px_100px_80px_40px] gap-3 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
-            <span>User</span>
-            <span>Role</span>
-            <span>Tasks</span>
-            <span>Projects</span>
-            <span>Joined</span>
+            <span>{t("user")}</span>
+            <span>{t("role")}</span>
+            <span>{t("tasks")}</span>
+            <span>{t("projects")}</span>
+            <span>{t("joined")}</span>
             <span />
           </div>
 
@@ -248,7 +250,7 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
                 {/* Role badge */}
                 <Badge variant={roleCfg.variant} className="gap-1 w-fit">
                   <RoleIcon className="h-3 w-3" />
-                  {roleCfg.label}
+                  {t(roleCfg.labelKey)}
                 </Badge>
 
                 {/* Tasks */}
@@ -275,17 +277,17 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => openEdit(user)} className="gap-2">
-                      <Pencil className="h-3.5 w-3.5" /> Edit User
+                      <Pencil className="h-3.5 w-3.5" /> {t("editUser")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => openResetPassword(user)} className="gap-2">
-                      <KeyRound className="h-3.5 w-3.5" /> Reset Password
+                      <KeyRound className="h-3.5 w-3.5" /> {t("resetPassword")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => setDeleteTarget(user)}
                       className="gap-2 text-destructive focus:text-destructive"
                     >
-                      <Trash2 className="h-3.5 w-3.5" /> Delete User
+                      <Trash2 className="h-3.5 w-3.5" /> {t("deleteUser")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -300,12 +302,12 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {formMode === "create" ? "Add New User" :
-               formMode === "edit" ? "Edit User" : "Reset Password"}
+              {formMode === "create" ? t("addUser") :
+               formMode === "edit" ? t("editUser") : t("resetPassword")}
             </DialogTitle>
             {formMode === "reset-password" && (
               <DialogDescription>
-                Set a new password for <strong>{editingUser?.name ?? editingUser?.email}</strong>
+                {t("resetPasswordDescription", { name: editingUser?.name ?? editingUser?.email ?? "" })}
               </DialogDescription>
             )}
           </DialogHeader>
@@ -315,17 +317,17 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
             {formMode !== "reset-password" && (
               <>
                 <div className="space-y-1.5">
-                  <Label htmlFor="user-name">Display Name *</Label>
+                  <Label htmlFor="user-name">{t("displayName")} *</Label>
                   <Input
                     id="user-name"
                     value={formValues.name}
                     onChange={(e) => setFormValues((p) => ({ ...p, name: e.target.value }))}
-                    placeholder="Full name"
+                    placeholder={t("fullNamePlaceholder")}
                     autoFocus
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="user-email">Email Address *</Label>
+                  <Label htmlFor="user-email">{t("emailAddress")} *</Label>
                   <Input
                     id="user-email"
                     type="email"
@@ -335,7 +337,7 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Role</Label>
+                  <Label>{t("role")}</Label>
                   <Select
                     value={formValues.role}
                     onValueChange={(v) => setFormValues((p) => ({ ...p, role: v }))}
@@ -344,9 +346,9 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN">Admin</SelectItem>
-                      <SelectItem value="MEMBER">Member</SelectItem>
-                      <SelectItem value="VIEWER">Viewer</SelectItem>
+                      <SelectItem value="ADMIN">{t("roleAdmin")}</SelectItem>
+                      <SelectItem value="MEMBER">{t("roleMember")}</SelectItem>
+                      <SelectItem value="VIEWER">{t("roleViewer")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -356,40 +358,39 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
             {/* Password fields */}
             <div className="space-y-1.5">
               <Label htmlFor="user-password">
-                {formMode === "create" ? "Password *" :
-                 formMode === "edit" ? "New Password (leave blank to keep current)" :
-                 "New Password *"}
+                {formMode === "create" ? `${t("password")} *` :
+                 formMode === "edit" ? t("newPassword") : `${t("newPasswordRequired")} *`}
               </Label>
               <Input
                 id="user-password"
                 type="password"
                 value={formValues.password}
                 onChange={(e) => setFormValues((p) => ({ ...p, password: e.target.value }))}
-                placeholder={formMode === "edit" ? "Leave blank to keep current" : "Min. 8 characters"}
+                placeholder={formMode === "edit" ? t("leaveBlankToKeep") : t("passwordMinPlaceholder")}
                 autoFocus={formMode === "reset-password"}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="user-confirm-password">Confirm Password</Label>
+              <Label htmlFor="user-confirm-password">{t("confirmPassword")}</Label>
               <Input
                 id="user-confirm-password"
                 type="password"
                 value={formValues.confirmPassword}
                 onChange={(e) => setFormValues((p) => ({ ...p, confirmPassword: e.target.value }))}
-                placeholder="Repeat password"
+                placeholder={t("repeatPassword")}
               />
             </div>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setFormOpen(false)} disabled={loading}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button onClick={handleSubmit} disabled={loading}>
               {loading ? (
-                <><Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> Saving...</>
-              ) : formMode === "create" ? "Create User" :
-                 formMode === "edit" ? "Save Changes" : "Reset Password"}
+                <><Loader2 className="h-3.5 w-3.5 animate-spin mr-2" /> {t("saving")}</>
+              ) : formMode === "create" ? t("createUser") :
+                 formMode === "edit" ? t("saveChanges") : t("resetPassword")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -399,20 +400,19 @@ export function UserManagementClient({ users: initialUsers }: UserManagementClie
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteUser")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete <strong>{deleteTarget?.name ?? deleteTarget?.email}</strong>?
-              This action cannot be undone and will remove all associated data.
+              {t("deleteConfirm", { name: deleteTarget?.name ?? deleteTarget?.email ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               className="bg-destructive hover:bg-destructive/90"
               disabled={loading}
             >
-              {loading ? "Deleting..." : "Delete User"}
+              {loading ? t("deleting") : t("deleteUser")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

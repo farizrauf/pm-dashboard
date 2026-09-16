@@ -32,7 +32,17 @@ export async function GET(
   }
 
   const { docId } = await params;
-  const doc = await prisma.taskDocument.findUnique({ where: { id: docId } });
+  const doc = await prisma.taskDocument.findFirst({
+    where: {
+      id: docId,
+      task: {
+        OR: [
+          { creatorId: session.user.id },
+          { project: { OR: [{ creatorId: session.user.id }, { members: { some: { userId: session.user.id } } }] } },
+        ],
+      },
+    },
+  });
   if (!doc) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -62,7 +72,18 @@ export async function DELETE(
   }
 
   const { docId } = await params;
-  const doc = await prisma.taskDocument.findUnique({ where: { id: docId }, select: { id: true } });
+  const doc = await prisma.taskDocument.findFirst({
+    where: {
+      id: docId,
+      task: {
+        OR: [
+          { creatorId: session.user.id },
+          { project: { OR: [{ creatorId: session.user.id }, { members: { some: { userId: session.user.id } } }] } },
+        ],
+      },
+    },
+    select: { id: true },
+  });
   if (!doc) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

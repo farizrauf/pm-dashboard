@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { getActiveWorkspace } from "@/lib/workspaces";
 
 const projectSchema = z.object({
   name: z.string().min(1, "Project name is required").max(100),
@@ -28,6 +29,8 @@ export async function createProject(data: ProjectFormData) {
   }
 
   const { startDate, dueDate, ...rest } = parsed.data;
+  const workspace = await getActiveWorkspace(session.user.id);
+  if (!workspace) throw new Error("No workspace available");
 
   const project = await prisma.project.create({
     data: {
@@ -35,6 +38,7 @@ export async function createProject(data: ProjectFormData) {
       startDate: startDate ? new Date(startDate) : null,
       dueDate: dueDate ? new Date(dueDate) : null,
       creatorId: session.user.id,
+      workspaceId: workspace.id,
       members: {
         create: {
           userId: session.user.id,
@@ -69,9 +73,15 @@ export async function updateProject(id: string, data: ProjectFormData) {
   }
 
   const { startDate, dueDate, ...rest } = parsed.data;
+  const workspace = await getActiveWorkspace(session.user.id);
+  if (!workspace) throw new Error("No workspace available");
 
   const project = await prisma.project.update({
-    where: { id },
+    where: {
+      id,
+      workspaceId: workspace.id,
+      OR: [{ creatorId: session.user.id }, { members: { some: { userId: session.user.id } } }],
+    },
     data: {
       ...rest,
       startDate: startDate ? new Date(startDate) : null,
@@ -90,7 +100,16 @@ export async function deleteProject(id: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  await prisma.project.delete({ where: { id } });
+  const workspace = await getActiveWorkspace(session.user.id);
+  if (!workspace) throw new Error("No workspace available");
+
+  await prisma.project.delete({
+    where: {
+      id,
+      workspaceId: workspace.id,
+      OR: [{ creatorId: session.user.id }, { members: { some: { userId: session.user.id } } }],
+    },
+  });
 
   revalidatePath("/projects");
   revalidatePath("/dashboard");
@@ -113,8 +132,11 @@ export async function getProjects({
 } = {}) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
+  const workspace = await getActiveWorkspace(session.user.id);
+  if (!workspace) return { projects: [], total: 0, pages: 0 };
 
   const baseWhere: Prisma.ProjectWhereInput = {
+    workspaceId: workspace.id,
     OR: [
       { creatorId: session.user.id },
       { members: { some: { userId: session.user.id } } },
@@ -167,10 +189,13 @@ export async function getProjects({
 export async function getProject(id: string) {
   const session = await auth();
   if (!session?.user?.id) throw new Error("Unauthorized");
+  const workspace = await getActiveWorkspace(session.user.id);
+  if (!workspace) return null;
 
   return prisma.project.findFirst({
     where: {
       id,
+      workspaceId: workspace.id,
       OR: [
         { creatorId: session.user.id },
         { members: { some: { userId: session.user.id } } },

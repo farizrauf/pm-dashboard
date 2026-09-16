@@ -62,7 +62,7 @@ export function LoginForm() {
     }
   };
 
-  return (
+  return (  
     /* Outer wrapper — slightly smaller max-width, less rounded */
     <div className="w-full max-w-4xl">
       <div className="flex rounded-xl shadow-xl overflow-hidden bg-white" style={{ minHeight: "min(520px, calc(100vh - 2rem))" }}>

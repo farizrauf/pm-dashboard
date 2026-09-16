@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import {
   Plus, Search, List, Grid3x3, MoreHorizontal, Trash2, Pencil,
   ChevronUp, ChevronDown, ChevronsUpDown,
-  Upload, X, RefreshCw, Paperclip,
+  Upload, X, RefreshCw, Paperclip, Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TaskForm } from "@/components/tasks/task-form";
+import { TaskDetailDialog } from "@/components/tasks/task-detail-dialog";
 import { StatusBadge, PriorityBadge } from "@/components/tasks/task-badge";
 import { deleteTask, bulkDeleteTasks, bulkUpdateTasks } from "@/actions/tasks";
 import { ExportButton } from "@/components/shared/export-button";
@@ -64,6 +65,7 @@ export function TasksClient({ initialTasks, total: _total, pages, projects, sear
   const [addOpen, setAddOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
@@ -398,14 +400,19 @@ export function TasksClient({ initialTasks, total: _total, pages, projects, sear
               {sortedTasks.map((task) => (
                 <div
                   key={task.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setDetailId(task.id)}
+                  onKeyDown={(e) => { if (e.key === "Enter") setDetailId(task.id); }}
                   className={cn(
-                    "min-w-[560px] grid grid-cols-[32px_minmax(0,1fr)_120px_100px_120px_120px_40px] gap-2 px-4 py-3 border-b border-border last:border-0 last:rounded-b-xl hover:bg-accent/30 transition-colors group items-center",
+                    "min-w-[560px] grid grid-cols-[32px_minmax(0,1fr)_120px_100px_120px_120px_40px] gap-2 px-4 py-3 border-b border-border last:border-0 last:rounded-b-xl hover:bg-accent/30 transition-colors group items-center cursor-pointer",
                     selectedIds.has(task.id) && "bg-primary/5"
                   )}
                 >
                   <Checkbox
                     checked={selectedIds.has(task.id)}
                     onCheckedChange={() => toggleOne(task.id)}
+                    onClick={(e) => e.stopPropagation()}
                     aria-label={`Select ${task.title}`}
                     className="mt-0.5"
                   />
@@ -414,7 +421,7 @@ export function TasksClient({ initialTasks, total: _total, pages, projects, sear
                       {task.project && (
                         <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: task.project.color }} />
                       )}
-                      <span className={cn("text-sm font-medium truncate", task.status === "DONE" && "line-through text-muted-foreground")}>
+                      <span className={cn("text-sm font-medium truncate group-hover:text-primary transition-colors", task.status === "DONE" && "line-through text-muted-foreground")}>
                         {task.title}
                       </span>
                       {!!task._count?.documents && (
@@ -450,22 +457,27 @@ export function TasksClient({ initialTasks, total: _total, pages, projects, sear
                   )}>
                     {formatDate(task.dueDate)}
                   </span>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <MoreHorizontal className="h-3.5 w-3.5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setEditTask(task)} className="gap-2">
-                        <Pencil className="h-3.5 w-3.5" /> {tc("edit")}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => setDeleteId(task.id)} className="gap-2 text-destructive focus:text-destructive">
-                        <Trash2 className="h-3.5 w-3.5" /> {tc("delete")}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreHorizontal className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setDetailId(task.id)} className="gap-2">
+                          <Eye className="h-3.5 w-3.5" /> View details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEditTask(task)} className="gap-2">
+                          <Pencil className="h-3.5 w-3.5" /> {tc("edit")}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setDeleteId(task.id)} className="gap-2 text-destructive focus:text-destructive">
+                          <Trash2 className="h-3.5 w-3.5" /> {tc("delete")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               ))}
             </div>
@@ -486,10 +498,20 @@ export function TasksClient({ initialTasks, total: _total, pages, projects, sear
                 </div>
                 <div className="space-y-2">
                   {colTasks.map((task) => (
-                    <div key={task.id} className="bg-card rounded-lg p-3 border border-border shadow-sm group">
-                      <p className={cn("text-sm font-medium", task.status === "DONE" && "line-through text-muted-foreground")}>
-                        {task.title}
-                      </p>
+                    <div
+                      key={task.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setDetailId(task.id)}
+                      onKeyDown={(e) => { if (e.key === "Enter") setDetailId(task.id); }}
+                      className="bg-card rounded-lg p-3 border border-border shadow-sm group cursor-pointer hover:border-primary/40 transition-colors"
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <p className={cn("text-sm font-medium truncate flex-1", task.status === "DONE" && "line-through text-muted-foreground")}>
+                          {task.title}
+                        </p>
+                        {!!task._count?.documents && <Paperclip className="h-3 w-3 shrink-0 text-muted-foreground" />}
+                      </div>
                       <div className="flex items-center gap-2 mt-2">
                         <PriorityBadge priority={task.priority} />
                         {task.dueDate && <span className="text-[10px] text-muted-foreground">{formatDate(task.dueDate)}</span>}
@@ -592,6 +614,13 @@ export function TasksClient({ initialTasks, total: _total, pages, projects, sear
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Task detail dialog */}
+      <TaskDetailDialog
+        taskId={detailId}
+        onOpenChange={(o) => !o && setDetailId(null)}
+        onChanged={() => router.refresh()}
+      />
 
       {/* Import dialog */}
       <ImportDialog

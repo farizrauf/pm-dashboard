@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { createNotifications } from "@/lib/notifications";
+import { NotificationType } from "@prisma/client";
 
 const taskSchema = z.object({
   title: z.string().min(1, "Title is required").max(200),
@@ -64,6 +66,20 @@ export async function createTask(data: TaskFormData) {
     });
   }
 
+  if (task.assignee?.id) {
+    try {
+      await createNotifications([task.assignee.id], {
+        type: NotificationType.TASK,
+        title: "New task assigned",
+        body: task.title,
+        href: "/tasks",
+        actorId: session.user.id,
+      });
+    } catch (error) {
+      console.error("Failed to create task notification", error);
+    }
+  }
+
   revalidatePath("/tasks");
   if (rest.projectId) {
     revalidatePath(`/projects/${rest.projectId}`);
@@ -79,7 +95,10 @@ export async function updateTask(id: string, data: Partial<TaskFormData>) {
 
   const { dueDate, labelIds, ...rest } = data;
 
-  const prevTask = await prisma.task.findUnique({ where: { id } });
+  const prevTask = await prisma.task.findUnique({
+    where: { id },
+    select: { status: true, creatorId: true, assigneeId: true, projectId: true },
+  });
 
   const task = await prisma.task.update({
     where: { id },
@@ -114,6 +133,18 @@ export async function updateTask(id: string, data: Partial<TaskFormData>) {
         taskId: task.id,
       },
     });
+
+    try {
+      await createNotifications([prevTask?.creatorId ?? "", prevTask?.assigneeId ?? ""], {
+        type: NotificationType.TASK,
+        title: "Task status updated",
+        body: `${task.title} is now ${rest.status}`,
+        href: "/tasks",
+        actorId: session.user.id,
+      });
+    } catch (error) {
+      console.error("Failed to create task status notification", error);
+    }
   }
 
   revalidatePath("/tasks");
@@ -229,9 +260,23 @@ export async function addComment(taskId: string, content: string) {
     },
   });
 
-  const task = await prisma.task.findUnique({ where: { id: taskId }, select: { projectId: true } });
+  const task = await prisma.task.findUnique({
+    where: { id: taskId },
+    select: { title: true, projectId: true, creatorId: true, assigneeId: true },
+  });
   if (task?.projectId) {
     revalidatePath(`/projects/${task.projectId}`);
+    try {
+      await createNotifications([task.creatorId, task.assigneeId ?? ""], {
+        type: NotificationType.COMMENT,
+        title: "New comment on task",
+        body: `${comment.author.name ?? "A teammate"} commented on ${task.title}`,
+        href: "/tasks",
+        actorId: session.user.id,
+      });
+    } catch (error) {
+      console.error("Failed to create comment notification", error);
+    }
   }
   revalidatePath("/tasks");
 

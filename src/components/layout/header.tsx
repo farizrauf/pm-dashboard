@@ -16,6 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useMobileNav } from "@/components/layout/mobile-nav";
+import { notificationTime, useNotifications } from "@/hooks/use-notifications";
 
 interface HeaderProps {
   title: string;
@@ -23,54 +24,13 @@ interface HeaderProps {
   actions?: React.ReactNode;
 }
 
-// ── Mock notifications (in a real app these would come from the DB) ──────────
-const MOCK_NOTIFICATIONS = [
-  {
-    id: "1",
-    type: "task" as const,
-    title: "Task deadline approaching",
-    desc: "BRI — Implementasi SNAP BI is due tomorrow",
-    time: "5m ago",
-    read: false,
-    href: "/tasks",
-  },
-  {
-    id: "2",
-    type: "project" as const,
-    title: "Milestone completed",
-    desc: "BCA — T24 Environment Setup signed off",
-    time: "1h ago",
-    read: false,
-    href: "/milestones",
-  },
-  {
-    id: "3",
-    type: "alert" as const,
-    title: "Invoice overdue",
-    desc: "BCA Core Banking Q1 2026 payment overdue",
-    time: "2h ago",
-    read: false,
-    href: "/invoices",
-  },
-  {
-    id: "4",
-    type: "task" as const,
-    title: "New comment on task",
-    desc: "Arif commented on: Implementasi SNAP BI",
-    time: "3h ago",
-    read: true,
-    href: "/tasks",
-  },
-  {
-    id: "5",
-    type: "project" as const,
-    title: "New risk reported",
-    desc: "High-severity risk added to BCA project",
-    time: "Yesterday",
-    read: true,
-    href: "/risks",
-  },
-];
+type SearchResult = {
+  id: string;
+  label: string;
+  category: string;
+  href: string;
+  detail?: string;
+};
 
 // ── Global search nav items ───────────────────────────────────────────────────
 const SEARCH_ITEMS = [
@@ -91,9 +51,9 @@ const SEARCH_ITEMS = [
 ];
 
 // ── Notification icon by type ─────────────────────────────────────────────────
-function NotifIcon({ type }: { type: "task" | "project" | "alert" }) {
-  if (type === "task") return <CheckCircle2 className="h-4 w-4 text-primary" />;
-  if (type === "project") return <FolderKanban className="h-4 w-4 text-emerald-500" />;
+function NotifIcon({ type }: { type: "TASK" | "MILESTONE" | "INVOICE" | "RISK" | "ISSUE" | "COMMENT" }) {
+  if (type === "TASK" || type === "COMMENT") return <CheckCircle2 className="h-4 w-4 text-primary" />;
+  if (type === "MILESTONE") return <FolderKanban className="h-4 w-4 text-emerald-500" />;
   return <AlertCircle className="h-4 w-4 text-amber-500" />;
 }
 
@@ -105,14 +65,20 @@ export function Header({ title, description, actions }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [dataResults, setDataResults] = useState<SearchResult[]>([]);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const filteredItems = searchQuery.trim()
+  const pageResults: SearchResult[] = (searchQuery.trim()
     ? SEARCH_ITEMS.filter((item) =>
         item.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.category.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : SEARCH_ITEMS;
+    : SEARCH_ITEMS
+  ).map((item) => ({ ...item, id: `page-${item.href}` }));
+
+  const filteredItems = searchQuery.trim()
+    ? [...pageResults, ...dataResults]
+    : pageResults;
 
   const openSearch = useCallback(() => {
     setSearchOpen(true);
@@ -135,7 +101,8 @@ export function Header({ title, description, actions }: HeaderProps) {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
-        searchOpen ? closeSearch() : openSearch();
+        if (searchOpen) closeSearch();
+        else openSearch();
       }
       if (e.key === "Escape" && searchOpen) closeSearch();
     };
@@ -149,6 +116,34 @@ export function Header({ title, description, actions }: HeaderProps) {
       setTimeout(() => searchInputRef.current?.focus(), 50);
     }
   }, [searchOpen]);
+
+  useEffect(() => {
+    const query = searchQuery.trim();
+    if (!searchOpen || query.length < 2) {
+      setDataResults([]);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        if (!response.ok) return;
+        const data = await response.json() as { results: SearchResult[] };
+        setDataResults(data.results);
+      } catch (error) {
+        if ((error as { name?: string }).name !== "AbortError") setDataResults([]);
+      }
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [searchOpen, searchQuery]);
 
   // Arrow key navigation in search results
   const handleSearchKeyDown = (e: React.KeyboardEvent) => {
@@ -164,17 +159,13 @@ export function Header({ title, description, actions }: HeaderProps) {
   };
 
   // ── Notification state ────────────────────────────────────────────────────────
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
-  const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAllRead = () => setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  const markRead = (id: string) => setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
 
   const { setOpen } = useMobileNav();
 
   return (
     <TooltipProvider>
-      <header className="flex h-14 items-center gap-2 border-b border-border bg-card/50 px-4 md:px-6 backdrop-blur-sm sticky top-0 z-10">
+      <header className="sticky top-0 z-10 flex h-14 w-full shrink-0 items-center gap-2 overflow-hidden border-b border-border bg-card/50 px-4 md:px-6 backdrop-blur-sm">
         {/* Mobile hamburger — only shown on small screens */}
         <Button
           variant="ghost"
@@ -186,14 +177,16 @@ export function Header({ title, description, actions }: HeaderProps) {
           <Menu className="h-4 w-4" />
         </Button>
 
-        <div className="flex flex-col justify-center">
-          <h1 className="text-base font-semibold leading-none">{title}</h1>
+        {/* Title block — flexible, truncates instead of pushing controls off-screen */}
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
+          <h1 className="truncate text-base font-semibold leading-none">{title}</h1>
           {description && (
-            <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{description}</p>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Controls — never shrink, always fully visible */}
+        <div className="flex shrink-0 items-center gap-2">
           {actions}
 
           {/* Search trigger button */}
@@ -269,10 +262,10 @@ export function Header({ title, description, actions }: HeaderProps) {
                         <p className={cn("text-xs truncate", !notif.read ? "font-semibold text-foreground" : "text-foreground/80")}>
                           {notif.title}
                         </p>
-                        <p className="text-[11px] text-muted-foreground truncate mt-0.5">{notif.desc}</p>
+                        <p className="text-[11px] text-muted-foreground truncate mt-0.5">{notif.body}</p>
                         <div className="flex items-center gap-1 mt-1">
                           <Clock className="h-2.5 w-2.5 text-muted-foreground" />
-                          <span className="text-[10px] text-muted-foreground">{notif.time}</span>
+                          <span className="text-[10px] text-muted-foreground">{notificationTime(notif.createdAt)}</span>
                           {!notif.read && (
                             <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
                           )}
@@ -372,7 +365,7 @@ export function Header({ title, description, actions }: HeaderProps) {
                         const idx = globalIdx++;
                         return (
                           <button
-                            key={item.href}
+                            key={item.id ?? item.href}
                             onClick={() => navigateTo(item.href)}
                             className={cn(
                               "w-full flex items-center gap-3 px-4 py-2 text-sm transition-colors text-left",
@@ -382,7 +375,10 @@ export function Header({ title, description, actions }: HeaderProps) {
                             )}
                           >
                             <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                            {item.label}
+                            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                            {item.detail && (
+                              <span className="max-w-[10rem] truncate text-xs text-muted-foreground">{item.detail}</span>
+                            )}
                           </button>
                         );
                       })}

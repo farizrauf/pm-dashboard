@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -26,7 +26,6 @@ export function UserNav({ collapsed, sidebarMode }: { collapsed?: boolean; sideb
   const trigger = (
     <button className={baseBtn}>
       <Avatar className="h-7 w-7 shrink-0">
-        <AvatarImage src={user?.image ?? ""} alt={user?.name ?? ""} />
         <AvatarFallback className="text-[10px]">{getInitials(user?.name)}</AvatarFallback>
       </Avatar>
       {!collapsed && (

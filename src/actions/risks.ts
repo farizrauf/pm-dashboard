@@ -4,6 +4,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { NotificationType } from "@prisma/client";
+import { notifyProjectMembers } from "@/lib/notifications";
 
 const riskSchema = z.object({
   title: z.string().min(1).max(200),
@@ -37,6 +39,19 @@ export async function createRisk(data: RiskFormData) {
   const parsed = riskSchema.safeParse(data);
   if (!parsed.success) return { error: parsed.error.errors[0].message };
   const risk = await prisma.risk.create({ data: parsed.data });
+  if (risk.severity === "CRITICAL" || risk.severity === "HIGH") {
+    try {
+      await notifyProjectMembers(risk.projectId, {
+        type: NotificationType.RISK,
+        title: "High-severity risk reported",
+        body: risk.title,
+        href: "/risks",
+        actorId: session.user.id,
+      });
+    } catch (error) {
+      console.error("Failed to create risk notification", error);
+    }
+  }
   revalidatePath("/risks");
   revalidatePath(`/projects/${parsed.data.projectId}`);
   return { success: true, risk };

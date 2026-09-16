@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     },
   },
   images: {
+    unoptimized: true, // avatars are base64 data URLs / external SVGs; next/image offers nothing for them
     remotePatterns: [
       {
         protocol: "https",

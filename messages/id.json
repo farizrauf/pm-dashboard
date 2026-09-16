@@ -272,6 +272,12 @@
     "newTeamMember": "Anggota tim baru",
     "newTeamMemberDesc": "Saat seseorang bergabung dengan proyek Anda"
   },
+  "workspace": {
+    "create": "Buat ruang kerja",
+    "delete": "Hapus ruang kerja",
+    "deleteConfirm": "Hapus ruang kerja \"{name}\" beserta seluruh proyeknya? Tindakan ini tidak dapat dibatalkan.",
+    "deleteFailed": "Ruang kerja tidak dapat dihapus. Periksa hak akses Anda atau buat ruang kerja lain terlebih dahulu."
+  },
   "admin": {
     "title": "Manajemen Pengguna",
     "description": "Kelola akun pengguna di ruang kerja Anda",
@@ -299,7 +305,32 @@
     "creating": "Membuat...",
     "saving": "Menyimpan...",
     "newPassword": "Kata Sandi Baru (kosongkan untuk tetap sama)",
-    "totalUsers": "Total {count} pengguna"
+    "totalUsers": "Total {count} pengguna",
+    "requiredUserFields": "Nama, email, dan kata sandi wajib diisi",
+    "requiredNameEmail": "Nama dan email wajib diisi",
+    "passwordMismatch": "Kata sandi tidak cocok",
+    "passwordMinLength": "Kata sandi harus terdiri dari minimal 8 karakter",
+    "passwordMinPlaceholder": "Minimal 8 karakter",
+    "leaveBlankToKeep": "Kosongkan untuk mempertahankan kata sandi saat ini",
+    "repeatPassword": "Ulangi kata sandi",
+    "newPasswordRequired": "Kata sandi baru",
+    "fullNamePlaceholder": "Nama lengkap",
+    "resetPasswordDescription": "Tetapkan kata sandi baru untuk {name}",
+    "tryDifferentSearch": "Coba kata pencarian lain.",
+    "user": "Pengguna",
+    "tasks": "Tugas",
+    "projects": "Proyek",
+    "joined": "Bergabung",
+    "totalUsersLabel": "Total pengguna",
+    "adminsLabel": "Administrator",
+    "membersLabel": "Anggota",
+    "roleAdmin": "Administrator",
+    "roleMember": "Anggota",
+    "roleViewer": "Pengamat",
+    "createUser": "Buat pengguna",
+    "saveChanges": "Simpan perubahan",
+    "cancel": "Batal",
+    "deleting": "Menghapus..."
   },
   "export": {
     "title": "Ekspor Data",

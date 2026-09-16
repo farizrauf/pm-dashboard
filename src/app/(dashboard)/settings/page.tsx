@@ -9,13 +9,14 @@ export const metadata: Metadata = { title: "Settings" };
 export default async function SettingsPage() {
   const session = await auth();
 
-  // Read the freshest profile from the DB so avatar/name changes persist
+  // Read the freshest profile from the DB so name/email changes persist
   // across reloads instead of relying on the (static) JWT session.
-  let user: { id: string; name: string | null; email: string | null; image: string | null } | null = null;
+  // `image` is deliberately not selected — the base64 avatar can be MBs large.
+  let user: { id: string; name: string | null; email: string | null } | null = null;
   if (session?.user?.id) {
     const dbUser = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true, name: true, email: true, image: true },
+      select: { id: true, name: true, email: true },
     });
     user = dbUser;
   }

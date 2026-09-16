@@ -4,10 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { Header } from "@/components/layout/header";
 import { UserManagementClient } from "@/components/admin/user-management-client";
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = { title: "User Management" };
 
 export default async function UserManagementPage() {
+  const t = await getTranslations("admin");
   const session = await auth();
   if (!session?.user?.id) redirect("/login");
 
@@ -39,8 +41,8 @@ export default async function UserManagementPage() {
   return (
     <div className="flex flex-col h-full">
       <Header
-        title="User Management"
-        description={`${users.length} user${users.length !== 1 ? "s" : ""} in your workspace`}
+        title={t("title")}
+        description={t("totalUsers", { count: users.length })}
       />
       <div className="flex-1 p-6 overflow-auto">
         <UserManagementClient users={users} />

@@ -5,6 +5,16 @@ import { prisma } from "@/lib/prisma";
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB per document
 const MAX_DOCS_PER_TASK = 10;
 
+function taskAccessWhere(taskId: string, userId: string) {
+  return {
+    id: taskId,
+    OR: [
+      { creatorId: userId },
+      { project: { OR: [{ creatorId: userId }, { members: { some: { userId } } }] } },
+    ],
+  };
+}
+
 // GET /api/tasks/[taskId]/documents — list documents for a task (metadata only)
 export async function GET(
   _req: NextRequest,
@@ -16,8 +26,11 @@ export async function GET(
   }
 
   const { taskId } = await params;
+  const task = await prisma.task.findFirst({ where: taskAccessWhere(taskId, session.user.id), select: { id: true } });
+  if (!task) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+
   const documents = await prisma.taskDocument.findMany({
-    where: { taskId },
+    where: { taskId: task.id },
     orderBy: { createdAt: "asc" },
     select: { id: true, name: true, mimeType: true, size: true, createdAt: true },
   });
@@ -36,7 +49,7 @@ export async function POST(
   }
 
   const { taskId } = await params;
-  const task = await prisma.task.findUnique({ where: { id: taskId }, select: { id: true } });
+  const task = await prisma.task.findFirst({ where: taskAccessWhere(taskId, session.user.id), select: { id: true } });
   if (!task) {
     return NextResponse.json({ error: "Task not found" }, { status: 404 });
   }

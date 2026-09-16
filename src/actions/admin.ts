@@ -141,7 +141,40 @@ export async function deleteUser(id: string) {
     return { error: "Cannot delete your own account" };
   }
 
-  await prisma.user.delete({ where: { id } });
+  await prisma.$transaction(async (tx) => {
+    const memberships = await tx.workspaceMember.findMany({
+      where: { userId: id },
+      select: { workspaceId: true, role: true },
+    });
+
+    for (const membership of memberships) {
+      if (membership.role === "OWNER") {
+        const replacement = await tx.workspaceMember.findFirst({
+          where: { workspaceId: membership.workspaceId, userId: { not: id } },
+          orderBy: { joinedAt: "asc" },
+          select: { id: true },
+        });
+        if (replacement) {
+          await tx.workspaceMember.update({
+            where: { id: replacement.id },
+            data: { role: "OWNER" },
+          });
+        }
+      }
+    }
+
+    await tx.notification.deleteMany({ where: { userId: id } });
+    await tx.comment.deleteMany({ where: { authorId: id } });
+    await tx.resourceAllocation.deleteMany({ where: { userId: id } });
+    await tx.activity.deleteMany({ where: { userId: id } });
+    await tx.projectMember.deleteMany({ where: { userId: id } });
+    await tx.task.deleteMany({ where: { creatorId: id } });
+    await tx.project.deleteMany({ where: { creatorId: id } });
+    await tx.workspaceMember.deleteMany({ where: { userId: id } });
+    await tx.account.deleteMany({ where: { userId: id } });
+    await tx.session.deleteMany({ where: { userId: id } });
+    await tx.user.delete({ where: { id } });
+  });
 
   revalidatePath("/settings/users");
   return { success: true };

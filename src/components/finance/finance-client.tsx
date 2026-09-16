@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   DollarSign, TrendingUp, TrendingDown, PieChart,
   Plus, Pencil, Trash2, Loader2, ChevronDown, ChevronRight,
+  ArrowUpRight, ArrowDownRight, Wallet,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,10 +51,28 @@ export function FinanceClient({ projects }: { projects: Project[] }) {
   const [budgetForm, setBudgetForm] = useState({ totalAmount: "", currency: "IDR", notes: "" });
   const [expForm, setExpForm] = useState({ title: "", amount: "", category: "OTHER", date: "", description: "" });
 
+  // Per-project computed figures (budget vs actual → selisih)
+  const rows = projects.map((p) => {
+    const budget = p.budget;
+    const spent = budget?.expenses.reduce((s, e) => s + e.amount, 0) ?? 0;
+    const invoiced = budget?.invoices.filter((i) => i.status !== "CANCELLED").reduce((a, i) => a + i.amount, 0) ?? 0;
+    return {
+      project: p,
+      hasBudget: !!budget,
+      expenses: budget?.expenses ?? [],
+      budget: budget?.totalAmount ?? 0,
+      currency: budget?.currency ?? "IDR",
+      spent,
+      invoiced,
+      remaining: (budget?.totalAmount ?? 0) - spent, // + surplus / − over-budget
+    };
+  });
+
   // Totals
-  const totalBudget = projects.reduce((s, p) => s + (p.budget?.totalAmount ?? 0), 0);
-  const totalSpent = projects.reduce((s, p) => s + (p.budget?.expenses.reduce((a, e) => a + e.amount, 0) ?? 0), 0);
-  const totalInvoiced = projects.reduce((s, p) => s + (p.budget?.invoices.filter(i => i.status !== "CANCELLED").reduce((a, i) => a + i.amount, 0) ?? 0), 0);
+  const totalBudget = rows.reduce((s, r) => s + r.budget, 0);
+  const totalSpent = rows.reduce((s, r) => s + r.spent, 0);
+  const totalInvoiced = rows.reduce((s, r) => s + r.invoiced, 0);
+  const totalRemaining = totalBudget - totalSpent;
 
   const toggleProject = (id: string) => {
     setExpanded((prev) => {
@@ -121,11 +140,17 @@ export function FinanceClient({ projects }: { projects: Project[] }) {
   return (
     <>
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
         {[
           { label: "Total Budget", value: fmt(totalBudget), icon: DollarSign, color: "text-primary" },
           { label: "Total Spent", value: fmt(totalSpent), icon: TrendingDown, color: "text-red-500" },
-          { label: "Total Invoiced", value: fmt(totalInvoiced), icon: TrendingUp, color: "text-emerald-500" },
+          {
+            label: totalRemaining >= 0 ? "Surplus" : "Defisit",
+            value: `${totalRemaining >= 0 ? "+" : "−"}${fmt(Math.abs(totalRemaining))}`,
+            icon: totalRemaining >= 0 ? ArrowUpRight : ArrowDownRight,
+            color: totalRemaining >= 0 ? "text-emerald-600" : "text-destructive",
+          },
+          { label: "Total Invoiced", value: fmt(totalInvoiced), icon: TrendingUp, color: "text-sky-500" },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-border bg-card p-5">
             <s.icon className={cn("h-5 w-5 mb-2", s.color)} />
@@ -135,13 +160,11 @@ export function FinanceClient({ projects }: { projects: Project[] }) {
         ))}
       </div>
 
-      {/* Projects */}
+      {/* Projects — each with clear budget vs spending and the difference */}
       <div className="space-y-3">
-        {projects.map((p) => {
-          const budget = p.budget;
-          const spent = budget?.expenses.reduce((s, e) => s + e.amount, 0) ?? 0;
-          const pct = budget?.totalAmount ? Math.min(100, Math.round((spent / budget.totalAmount) * 100)) : 0;
-          const isOver = spent > (budget?.totalAmount ?? 0) && (budget?.totalAmount ?? 0) > 0;
+        {rows.map(({ project: p, hasBudget, expenses, budget, currency, spent, invoiced, remaining }) => {
+          const pct = budget ? Math.min(100, Math.round((spent / budget) * 100)) : 0;
+          const isOver = spent > budget && budget > 0;
           const isOpen = expanded.has(p.id);
 
           return (
@@ -155,9 +178,15 @@ export function FinanceClient({ projects }: { projects: Project[] }) {
                 <span className="h-3 w-3 rounded-full shrink-0" style={{ background: p.color }} />
                 <p className="text-sm font-semibold flex-1">{p.name}</p>
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <span>Budget: <strong className="text-foreground">{budget ? fmt(budget.totalAmount, budget.currency) : "—"}</strong></span>
+                  <span>Budget: <strong className="text-foreground">{budget ? fmt(budget, currency) : "—"}</strong></span>
                   <span>Spent: <strong className={cn(isOver ? "text-destructive" : "text-foreground")}>{fmt(spent)}</strong></span>
-                  {budget && <span className={cn("font-medium", isOver ? "text-destructive" : "text-emerald-600")}>{pct}%</span>}
+                  {budget > 0 && (
+                    <span className={cn("inline-flex items-center gap-1 font-semibold", isOver ? "text-destructive" : "text-emerald-600")}>
+                      <Wallet className="h-3 w-3" />
+                      {isOver ? `Over ${fmt(Math.abs(remaining))}` : `${fmt(remaining)} sisa`}
+                    </span>
+                  )}
+                  {budget > 0 && <span className={cn("font-medium", isOver ? "text-destructive" : "text-emerald-600")}>{pct}%</span>}
                 </div>
                 <div className="flex items-center gap-2 ml-3" onClick={(e) => e.stopPropagation()}>
                   <Button variant="outline" size="sm" className="h-6 text-xs px-2" onClick={() => openBudget(p)}>
@@ -169,8 +198,19 @@ export function FinanceClient({ projects }: { projects: Project[] }) {
                 </div>
               </div>
 
+              {/* Per-project summary strip: budget − spent = selisih */}
+              {budget > 0 && (
+                <div className="px-4 pb-1 grid grid-cols-[1fr_auto] sm:grid-cols-[repeat(4,auto)_1fr] gap-x-6 gap-y-1 text-xs items-center">
+                  <span className="text-muted-foreground">Budget <strong className="text-foreground ml-1">{fmt(budget, currency)}</strong></span>
+                  <span className="text-muted-foreground">Pengeluaran <strong className={cn("ml-1", isOver ? "text-destructive" : "text-foreground")}>{fmt(spent)}</strong></span>
+                  <span className="text-muted-foreground">Invoice <strong className="text-foreground ml-1">{fmt(invoiced)}</strong></span>
+                  <span className="text-muted-foreground">Selisih <strong className={cn("ml-1", isOver ? "text-destructive" : "text-emerald-600")}>{isOver ? "−" : "+"}{fmt(Math.abs(remaining))}</strong></span>
+                  <span className="hidden sm:block" />
+                </div>
+              )}
+
               {/* Progress bar */}
-              {budget && (
+              {budget > 0 && (
                 <div className="px-4 pb-2">
                   <Progress value={pct} className={cn("h-1.5", isOver && "[&>div]:bg-destructive")} />
                 </div>
@@ -179,16 +219,16 @@ export function FinanceClient({ projects }: { projects: Project[] }) {
               {/* Expanded: expense list */}
               {isOpen && (
                 <div className="border-t border-border">
-                  {!budget ? (
+                  {!hasBudget ? (
                     <p className="text-xs text-muted-foreground text-center py-6">No budget set for this project.</p>
-                  ) : budget.expenses.length === 0 ? (
+                  ) : expenses.length === 0 ? (
                     <p className="text-xs text-muted-foreground text-center py-6">No expenses recorded.</p>
                   ) : (
                     <div className="overflow-x-auto">
                       <div className="min-w-[420px] grid grid-cols-[minmax(0,1fr)_100px_90px_120px_32px] gap-2 px-4 py-2 bg-muted/20 text-xs font-medium text-muted-foreground border-b border-border">
                         <span>Expense</span><span>Category</span><span className="text-right">Amount</span><span>Date</span><span />
                       </div>
-                      {budget.expenses.map((exp) => (
+                      {expenses.map((exp) => (
                         <div key={exp.id} className="min-w-[420px] grid grid-cols-[minmax(0,1fr)_100px_90px_120px_32px] gap-2 px-4 py-2.5 border-b border-border last:border-0 hover:bg-accent/10 items-center group">
                           <div className="min-w-0">
                             <p className="text-sm truncate">{exp.title}</p>

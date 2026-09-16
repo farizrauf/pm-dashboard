@@ -272,6 +272,12 @@
     "newTeamMember": "New team member",
     "newTeamMemberDesc": "When someone joins a project you're on"
   },
+  "workspace": {
+    "create": "Create workspace",
+    "delete": "Delete workspace",
+    "deleteConfirm": "Delete workspace \"{name}\" and all its projects? This action cannot be undone.",
+    "deleteFailed": "Unable to delete workspace. Check your permissions or create another workspace first."
+  },
   "admin": {
     "title": "User Management",
     "description": "Manage user accounts in your workspace",
@@ -299,7 +305,32 @@
     "creating": "Creating...",
     "saving": "Saving...",
     "newPassword": "New Password (leave blank to keep current)",
-    "totalUsers": "{count} user(s) total"
+    "totalUsers": "{count} user(s) total",
+    "requiredUserFields": "Name, email, and password are required",
+    "requiredNameEmail": "Name and email are required",
+    "passwordMismatch": "Passwords do not match",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "passwordMinPlaceholder": "Minimum 8 characters",
+    "leaveBlankToKeep": "Leave blank to keep the current password",
+    "repeatPassword": "Repeat password",
+    "newPasswordRequired": "New password",
+    "fullNamePlaceholder": "Full name",
+    "resetPasswordDescription": "Set a new password for {name}",
+    "tryDifferentSearch": "Try a different search term.",
+    "user": "User",
+    "tasks": "Tasks",
+    "projects": "Projects",
+    "joined": "Joined",
+    "totalUsersLabel": "Total users",
+    "adminsLabel": "Admins",
+    "membersLabel": "Members",
+    "roleAdmin": "Admin",
+    "roleMember": "Member",
+    "roleViewer": "Viewer",
+    "createUser": "Create user",
+    "saveChanges": "Save changes",
+    "cancel": "Cancel",
+    "deleting": "Deleting..."
   },
   "export": {
     "title": "Export Data",

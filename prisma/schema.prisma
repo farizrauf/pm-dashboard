@@ -30,6 +30,8 @@ model User {
   activities       Activity[]
   createdProjects  Project[]       @relation("ProjectCreator")
   resourceAllocations ResourceAllocation[]
+  notifications    Notification[]
+  workspaceMemberships WorkspaceMember[]
 
   @@map("users")
 }
@@ -86,10 +88,12 @@ model Project {
   dueDate     DateTime?
   color       String        @default("#B4ABF4")
   creatorId   String
+  workspaceId String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
   creator    User            @relation("ProjectCreator", fields: [creatorId], references: [id])
+  workspace  Workspace?      @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
   members    ProjectMember[]
   tasks      Task[]
   milestones Milestone[]
@@ -103,7 +107,37 @@ model Project {
   @@index([status])
   @@index([priority])
   @@index([dueDate])
+  @@index([workspaceId])
   @@map("projects")
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  plan      String   @default("free")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  WorkspaceMember[]
+  projects Project[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String        @id @default(cuid())
+  workspaceId String
+  userId      String
+  role        WorkspaceRole  @default(MEMBER)
+  joinedAt    DateTime       @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@map("workspace_members")
 }
 
 model ProjectMember {
@@ -282,9 +316,33 @@ model ProjectFile {
   @@map("project_files")
 }
 
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String?
+  href      String           @default("/")
+  read      Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+  @@map("notifications")
+}
+
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
 enum UserRole {
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+enum WorkspaceRole {
+  OWNER
   ADMIN
   MEMBER
   VIEWER
@@ -345,6 +403,15 @@ enum IssueStatus {
   IN_PROGRESS
   RESOLVED
   CLOSED
+}
+
+enum NotificationType {
+  TASK
+  MILESTONE
+  INVOICE
+  RISK
+  ISSUE
+  COMMENT
 }
 
 // ─── Finance & Invoice ────────────────────────────────────────────────────────
