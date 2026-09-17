@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Plus, FileText, CheckCircle2, Send, XCircle,
   AlertTriangle, MoreHorizontal, Trash2, Loader2, ImagePlus, Image as ImageIcon,
+  Eye, Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,7 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [formOpen, setFormOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Invoice | null>(null);
+  const [detailTarget, setDetailTarget] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState(emptyForm);
 
@@ -149,14 +151,21 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
         </div>
       ) : (
         <div className="rounded-xl border border-border overflow-x-auto bg-card">
-          <div className="min-w-[620px] grid grid-cols-[80px_minmax(0,1fr)_130px_110px_100px_110px_40px] gap-2 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
+          <div className="min-w-[720px] grid grid-cols-[80px_minmax(0,1fr)_130px_110px_150px_130px_40px] gap-3 px-4 py-2.5 border-b border-border bg-muted/30 text-xs font-medium text-muted-foreground">
             <span>No.</span><span>Title</span><span>Project</span><span>Status</span><span className="text-right">Amount</span><span>Due</span><span />
           </div>
           {filtered.map((inv) => {
             const cfg = STATUS_CONFIG[inv.status];
             const Icon = cfg.icon;
             return (
-              <div key={inv.id} className="min-w-[620px] grid grid-cols-[80px_minmax(0,1fr)_130px_110px_100px_110px_40px] gap-2 px-4 py-3 border-b border-border last:border-0 last:rounded-b-xl hover:bg-accent/20 transition-colors group items-center">
+              <div
+                key={inv.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setDetailTarget(inv)}
+                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setDetailTarget(inv); }}
+                className="min-w-[720px] grid grid-cols-[80px_minmax(0,1fr)_130px_110px_150px_130px_40px] gap-3 px-4 py-3 border-b border-border last:border-0 last:rounded-b-xl hover:bg-accent/20 transition-colors group items-center cursor-pointer"
+              >
                 <span className="text-xs font-mono text-muted-foreground">{inv.invoiceNo}</span>
                 <div className="flex items-center gap-2 min-w-0">
                   {inv.image ? (
@@ -189,25 +198,38 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
                 </span>
                 <span className="text-sm font-semibold text-right">{fmt(inv.amount)}</span>
                 <span className="text-xs text-muted-foreground">{inv.dueAt ? format(new Date(inv.dueAt), "MMM d, yyyy") : "—"}</span>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <MoreHorizontal className="h-3.5 w-3.5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem className="text-xs font-semibold text-muted-foreground" disabled>Change Status</DropdownMenuItem>
-                    {Object.keys(STATUS_CONFIG).filter((s) => s !== inv.status).map((s) => (
-                      <DropdownMenuItem key={s} onClick={() => handleStatusChange(inv.id, s)} className="gap-2 text-sm">
-                        → {STATUS_CONFIG[s].label}
+                <div onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <MoreHorizontal className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setDetailTarget(inv)} className="gap-2 text-sm">
+                        <Eye className="h-3.5 w-3.5" /> View details
                       </DropdownMenuItem>
-                    ))}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setDeleteTarget(inv)} className="gap-2 text-destructive focus:text-destructive">
-                      <Trash2 className="h-3.5 w-3.5" /> Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                      {inv.image && (
+                        <DropdownMenuItem asChild className="gap-2 text-sm">
+                          <a href={inv.image} download={`${inv.invoiceNo}-${inv.title}`}>
+                            <Download className="h-3.5 w-3.5" /> Download file
+                          </a>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-xs font-semibold text-muted-foreground" disabled>Change Status</DropdownMenuItem>
+                      {Object.keys(STATUS_CONFIG).filter((s) => s !== inv.status).map((s) => (
+                        <DropdownMenuItem key={s} onClick={() => handleStatusChange(inv.id, s)} className="gap-2 text-sm">
+                          → {STATUS_CONFIG[s].label}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setDeleteTarget(inv)} className="gap-2 text-destructive focus:text-destructive">
+                        <Trash2 className="h-3.5 w-3.5" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             );
           })}
@@ -307,6 +329,95 @@ export function InvoicesClient({ invoices: initial, budgets }: { invoices: Invoi
               {loading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-2" />Creating...</> : "Create Invoice"}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!detailTarget} onOpenChange={(open) => !open && setDetailTarget(null)}>
+        <DialogContent className="max-w-2xl">
+          {detailTarget && (() => {
+            const cfg = STATUS_CONFIG[detailTarget.status];
+            const StatusIcon = cfg.icon;
+            const isImage = detailTarget.image?.startsWith("data:image/");
+            const isPdf = detailTarget.image?.startsWith("data:application/pdf");
+
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    {detailTarget.title}
+                    <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium", cfg.cls)}>
+                      <StatusIcon className="h-3 w-3" /> {cfg.label}
+                    </span>
+                  </DialogTitle>
+                  <p className="text-sm text-muted-foreground">{detailTarget.invoiceNo}</p>
+                </DialogHeader>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="text-xs text-muted-foreground">Amount</p>
+                    <p className="mt-1 text-lg font-semibold">{fmt(detailTarget.amount)}</p>
+                  </div>
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="text-xs text-muted-foreground">Project</p>
+                    <p className="mt-1 text-sm font-medium">{detailTarget.budget.project.name}</p>
+                  </div>
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="text-xs text-muted-foreground">Issue date</p>
+                    <p className="mt-1 text-sm font-medium">{format(new Date(detailTarget.issuedAt), "PPP")}</p>
+                  </div>
+                  <div className="rounded-lg border border-border p-3">
+                    <p className="text-xs text-muted-foreground">Due date</p>
+                    <p className="mt-1 text-sm font-medium">{detailTarget.dueAt ? format(new Date(detailTarget.dueAt), "PPP") : "Not set"}</p>
+                  </div>
+                </div>
+
+                {detailTarget.notes && (
+                  <div>
+                    <p className="mb-1 text-xs font-medium text-muted-foreground">Notes</p>
+                    <p className="rounded-lg bg-muted/40 p-3 text-sm whitespace-pre-wrap">{detailTarget.notes}</p>
+                  </div>
+                )}
+
+                {detailTarget.items.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">Invoice items</p>
+                    <div className="overflow-hidden rounded-lg border border-border">
+                      {detailTarget.items.map((item) => (
+                        <div key={item.id} className="grid grid-cols-[minmax(0,1fr)_60px_100px] gap-2 border-b border-border px-3 py-2 text-sm last:border-0">
+                          <span className="truncate">{item.description}</span>
+                          <span className="text-right text-muted-foreground">{item.quantity}</span>
+                          <span className="text-right font-medium">{fmt(item.total)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {detailTarget.image && (
+                  <div>
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-xs font-medium text-muted-foreground">Uploaded invoice file</p>
+                      <Button variant="outline" size="sm" className="h-8 gap-1.5" asChild>
+                        <a href={detailTarget.image} download={`${detailTarget.invoiceNo}-${detailTarget.title}`}>
+                          <Download className="h-3.5 w-3.5" /> Download
+                        </a>
+                      </Button>
+                    </div>
+                    {isImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={detailTarget.image} alt={detailTarget.title} className="max-h-[420px] w-full rounded-lg border border-border object-contain" />
+                    ) : isPdf ? (
+                      <iframe src={detailTarget.image} title={`${detailTarget.title} preview`} className="h-[420px] w-full rounded-lg border border-border" />
+                    ) : (
+                      <div className="flex items-center gap-3 rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
+                        <FileText className="h-5 w-5 shrink-0" /> This file type cannot be previewed here. Download it to view the file.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
