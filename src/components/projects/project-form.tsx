@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { Loader2 } from "lucide-react";
+import { CalendarDays, CheckCircle2, CircleDot, Flag, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +27,21 @@ const COLORS = [
   "#B4ABF4", "#BFD2D1", "#60A5FA", "#34D399", "#F59E0B",
   "#EF4444", "#8B5CF6", "#EC4899", "#14B8A6", "#F97316",
 ];
+
+const STATUS_LABELS: Record<ProjectFormData["status"], string> = {
+  PLANNING: "Planning",
+  ACTIVE: "Active",
+  ON_HOLD: "On Hold",
+  COMPLETED: "Completed",
+  CANCELLED: "Cancelled",
+};
+
+const PRIORITY_LABELS: Record<ProjectFormData["priority"], string> = {
+  CRITICAL: "Critical",
+  HIGH: "High",
+  MEDIUM: "Medium",
+  LOW: "Low",
+};
 
 interface ProjectFormProps {
   project?: {
@@ -97,15 +112,16 @@ export function ProjectForm({ project }: ProjectFormProps) {
   };
 
   return (
-    <Card className="max-w-2xl">
-      <CardHeader>
-        <CardTitle>{project ? "Edit Project" : "New Project"}</CardTitle>
-        <CardDescription>
-          {project ? "Update project details" : "Create a new project for your team"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-5">
+    <div className="grid max-w-6xl grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,1fr)]">
+      <Card>
+        <CardHeader>
+          <CardTitle>{project ? "Edit Project" : "New Project"}</CardTitle>
+          <CardDescription>
+            {project ? "Update project details" : "Create a new project for your team"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-1.5">
             <Label htmlFor="name">Project Name *</Label>
             <Input
@@ -199,16 +215,80 @@ export function ProjectForm({ project }: ProjectFormProps) {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" />{project ? "Saving..." : "Creating..."}</> : project ? "Save Changes" : "Create Project"}
-            </Button>
-            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading}>
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+            <div className="flex gap-3 border-t border-border pt-5">
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" />{project ? "Saving..." : "Creating..."}</> : project ? "Save Changes" : "Create Project"}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => router.back()} disabled={isLoading}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <aside className="space-y-4 xl:sticky xl:top-6">
+        <Card className="overflow-hidden">
+          <div className="h-2" style={{ background: values.color }} />
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <CardTitle className="text-base">Project preview</CardTitle>
+                <CardDescription>See how your project will appear.</CardDescription>
+              </div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg" style={{ background: `${values.color}28`, color: values.color }}>
+                <CircleDot className="h-5 w-5" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-lg font-semibold leading-tight">{values.name.trim() || "Untitled project"}</p>
+              <p className="mt-1 line-clamp-3 min-h-[3.75rem] text-sm text-muted-foreground">
+                {values.description.trim() || "Add a short description to help your team understand the project scope."}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 font-medium">
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: values.color }} />
+                {STATUS_LABELS[values.status]}
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
+                <Flag className="h-3 w-3" /> {PRIORITY_LABELS[values.priority]}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 border-t border-border pt-3">
+              <div className="rounded-lg bg-muted/40 p-2.5">
+                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><CalendarDays className="h-3 w-3" /> Start date</p>
+                <p className="mt-1 text-sm font-medium">{values.startDate || "Not set"}</p>
+              </div>
+              <div className="rounded-lg bg-muted/40 p-2.5">
+                <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground"><CalendarDays className="h-3 w-3" /> Due date</p>
+                <p className="mt-1 text-sm font-medium">{values.dueDate || "Not set"}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base"><Sparkles className="h-4 w-4 text-primary" /> Project setup</CardTitle>
+            <CardDescription>A few details make collaboration easier.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[
+              [Boolean(values.name.trim()), "Give the project a clear name"],
+              [Boolean(values.description.trim()), "Add goals or project scope"],
+              [Boolean(values.startDate && values.dueDate), "Set a project timeline"],
+            ].map(([complete, label]) => (
+              <div key={label as string} className="flex items-start gap-2.5 text-sm">
+                <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${complete ? "text-emerald-500" : "text-muted-foreground/40"}`} />
+                <span className={complete ? "text-foreground" : "text-muted-foreground"}>{label as string}</span>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </aside>
+    </div>
   );
 }
