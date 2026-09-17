@@ -1,301 +1,171 @@
-# Synchro — Project Management Dashboard
+# Syncro
 
-A production-ready fullstack Project Management SaaS built with Next.js 15, TypeScript, Tailwind CSS, Prisma ORM, and PostgreSQL.
+Syncro is a project management dashboard for organizing projects, tasks, milestones, teams, risks, issues, resources, invoices, and reports in one workspace.
 
----
-
-## Tech Stack 
-
-| Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 15 (App Router) |
-| Language | TypeScript |
-| Styling | Tailwind CSS + shadcn/ui |
-| Database | PostgreSQL (Neon / Supabase) |
-| ORM | Prisma |
-| Auth | Auth.js v5 (NextAuth) |
-| Charts | Recharts |
-| Drag & Drop | @dnd-kit |
-| Icons | Lucide React |
-| Toasts | Sonner |
-| Validation | Zod |
-
----
+The application is built for teams that need a practical view of their work, from project planning and task execution to financial tracking and team coordination.
 
 ## Features
 
-- **Dashboard** — KPI cards, project progress, task status charts, team workload, recent activity, upcoming deadlines
-- **Projects** — Grid/list view, create/edit/delete, status & priority filters, search, pagination
-- **Project Detail** — Overview, Tasks, Kanban Board, Timeline, Activity tabs
-- **Kanban Board** — Drag-and-drop tasks across columns, persisted to database
-- **Tasks** — Table & board views, filters, sorting, create/edit/delete
-- **Calendar** — Monthly calendar with task deadlines and milestones
-- **Team** — Member cards with workload visualization
-- **Reports** — Charts for task completion, project progress, team workload, overdue tasks
-- **Settings** — Profile, password, appearance (light/dark mode), notifications
-- **Dark Mode** — Full light/dark theme support
+- Dashboard with project progress, task status, team workload, activity, and upcoming deadlines
+- Project management with grid and list views, search, filters, pagination, priorities, statuses, and color labels
+- Project detail pages with overview, tasks, Kanban board, timeline, and activity
+- Task management with list and board views, sorting, filters, labels, assignees, comments, and document attachments
+- Milestones and calendar views for deadlines and delivery planning
+- Team and resource management with workload information
+- Risk and issue tracking
+- Finance and invoice management with status tracking, uploaded file preview, invoice details, and downloads
+- Reports for project progress, task completion, workload, and overdue work
+- Notifications, global search, workspace switching, user management, and settings
+- Light and dark themes
 
----
+## Tech stack
 
-## Prerequisites
+| Area | Technology |
+| --- | --- |
+| Framework | Next.js 15 with App Router |
+| Language | TypeScript |
+| UI | Tailwind CSS, Radix UI, and custom UI components |
+| Database | PostgreSQL |
+| ORM | Prisma |
+| Authentication | Auth.js v5 |
+| Charts | Recharts |
+| Drag and drop | dnd-kit |
+| Validation | Zod |
+| Icons and feedback | Lucide React and Sonner |
 
-Pastikan sudah terinstall:
+## Requirements
 
-- **Node.js** v18 atau lebih baru — [nodejs.org](https://nodejs.org)
-- **npm** v9 atau lebih baru (sudah include dengan Node.js)
-- **PostgreSQL database** — gunakan salah satu:
-  - [Neon](https://neon.tech) ← recommended, gratis
-  - [Supabase](https://supabase.com)
-  - Local PostgreSQL
+- Node.js 18 or newer
+- npm 9 or newer
+- PostgreSQL from Neon, Supabase, or a local installation
 
----
+## Local setup
 
-## Cara Menjalankan Lokal
+1. Install dependencies:
 
-### 1. Clone / masuk ke folder project
+   ```bash
+   npm install
+   ```
+
+2. Create `.env.local` from the example file.
+
+   On macOS or Linux:
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+   On Windows PowerShell:
+
+   ```powershell
+   Copy-Item .env.example .env.local
+   ```
+
+3. Set the required environment variables:
+
+   ```env
+   DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
+   AUTH_SECRET="your-random-secret"
+   NEXTAUTH_URL="http://localhost:3000"
+   ```
+
+4. Create the database tables:
+
+   ```bash
+   npm run db:push
+   ```
+
+5. Seed development data when needed:
+
+   ```bash
+   npm run db:seed
+   ```
+
+6. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Demo accounts
+
+Demo accounts are created by the seed script.
+
+| Email | Password | Role |
+| --- | --- | --- |
+| `alice@synchro.dev` | `password123` | Admin |
+| `bob@synchro.dev` | `password123` | Member |
+| `carol@synchro.dev` | `password123` | Member |
+| `dave@synchro.dev` | `password123` | Member |
+| `eva@synchro.dev` | `password123` | Member |
+
+Do not use these credentials outside local development.
+
+## Available scripts
 
 ```bash
-cd pm-dashboard
+npm run dev        # Start the development server
+npm run build      # Build the application for production
+npm run start      # Start the production server
+npm run lint       # Run ESLint
+npm run typecheck  # Run the TypeScript compiler without emitting files
+npm run db:push    # Apply the Prisma schema to the database
+npm run db:migrate # Create and run a Prisma migration
+npm run db:seed    # Insert development data
+npm run db:studio  # Open Prisma Studio
 ```
 
-### 2. Install dependencies
+## Project structure
 
-```bash
-npm install
+```text
+prisma/
+  schema.prisma       Database schema
+  seed.ts              Development seed data
+src/
+  actions/             Server actions for application mutations
+  app/                 Routes, layouts, API routes, and error pages
+  components/          Feature components and shared UI
+  hooks/               Client hooks such as locale and notifications
+  lib/                 Authentication, Prisma, i18n, and shared utilities
+  middleware.ts        Route protection
+messages/              Translation files
+docs/                  Product and design notes
 ```
 
-### 3. Setup environment variables
+## Database
 
-Copy file example dan isi dengan konfigurasi kamu:
+Prisma manages the PostgreSQL schema. The main models cover users, workspaces, projects, tasks, task documents, milestones, comments, activities, labels, budgets, expenses, invoices, resources, risks, issues, notifications, and project members.
 
-```bash
-cp .env.example .env.local
-```
+For local development, `npm run db:push` is the quickest way to apply schema changes. Use `npm run db:migrate` when you need migration history.
 
-Edit `.env.local`:
+## Deployment
+
+Syncro can be deployed to Vercel with a PostgreSQL provider such as Neon or Supabase.
+
+Configure these environment variables in the Vercel project:
 
 ```env
-# Dari Neon / Supabase / PostgreSQL lokal
-DATABASE_URL="postgresql://user:password@host/dbname?sslmode=require"
-
-# Generate dengan: openssl rand -base64 32
-AUTH_SECRET="isi-dengan-string-random-panjang"
-
-# URL app kamu
-NEXTAUTH_URL="http://localhost:3000"
+DATABASE_URL=postgresql://...
+AUTH_SECRET=your-random-secret
+NEXTAUTH_URL=https://your-domain.example
 ```
 
-#### Cara dapat DATABASE_URL dari Neon (gratis):
-1. Buka [neon.tech](https://neon.tech) → Sign up
-2. Create new project
-3. Klik **Connect** → copy **Connection string**
-4. Paste ke `DATABASE_URL` di `.env.local`
-
-### 4. Push schema database
+The build command runs Prisma client generation before the Next.js build. After configuring the production database, apply the schema with:
 
 ```bash
 npx prisma db push
 ```
 
-Perintah ini membuat semua tabel di database berdasarkan `prisma/schema.prisma`.
+Run the seed script only when you intentionally want development data in that database.
 
-### 5. Seed data dummy (opsional tapi direkomendasikan)
+## Notes
 
-```bash
-npm run db:seed
-```
+- Keep `.env`, `.env.local`, and other environment files out of version control.
+- The application currently uses `next lint`, which is deprecated in Next.js 16. Migrate to the ESLint CLI before upgrading to that version.
+- Uploaded invoice files are currently stored as data URLs in the invoice record. Object storage would be a better option for larger files or production-scale usage.
 
-Ini akan membuat:
-- 5 user akun test
-- 6 sample projects
-- 20+ tasks
-- Milestones, activities, comments, labels
+## Repository description
 
-### 6. Jalankan dev server
-
-```bash
-npm run dev
-```
-
-Buka **http://localhost:3000**
-
----
-
-## Akun Demo (setelah seed)
-
-| Email | Password | Role |
-|-------|----------|------|
-| alice@synchro.dev | password123 | Admin |
-| bob@synchro.dev | password123 | Member |
-| carol@synchro.dev | password123 | Member |
-| dave@synchro.dev | password123 | Member |
-| eva@synchro.dev | password123 | Member |
-
----
-
-## Perintah yang Tersedia
-
-```bash
-# Development
-npm run dev          # Jalankan dev server (http://localhost:3000)
-
-# Build & Production
-npm run build        # Build untuk production
-npm run start        # Jalankan production server (setelah build)
-
-# Code Quality
-npm run lint         # Cek ESLint
-npm run typecheck    # Cek TypeScript
-
-# Database
-npm run db:push      # Push schema ke database (tanpa migration history)
-npm run db:migrate   # Buat migration baru
-npm run db:seed      # Isi database dengan data dummy
-npm run db:studio    # Buka Prisma Studio (GUI database)
-```
-
----
-
-## Struktur Folder
-
-```
-pm-dashboard/
-├── prisma/
-│   ├── schema.prisma      # Database schema & models
-│   └── seed.ts            # Data dummy untuk development
-├── src/
-│   ├── actions/           # Server Actions (CRUD operations)
-│   │   ├── dashboard.ts
-│   │   ├── projects.ts
-│   │   ├── tasks.ts
-│   │   ├── milestones.ts
-│   │   ├── team.ts
-│   │   └── settings.ts
-│   ├── app/               # Next.js App Router pages
-│   │   ├── (auth)/        # Login page
-│   │   │   └── login/
-│   │   ├── (dashboard)/   # Protected dashboard pages
-│   │   │   ├── dashboard/
-│   │   │   ├── projects/
-│   │   │   ├── tasks/
-│   │   │   ├── calendar/
-│   │   │   ├── team/
-│   │   │   ├── reports/
-│   │   │   └── settings/
-│   │   └── api/auth/      # Auth.js API routes
-│   ├── components/
-│   │   ├── ui/            # Base UI components (Button, Card, Dialog, dll)
-│   │   ├── layout/        # Sidebar, Header, UserNav
-│   │   ├── dashboard/     # Dashboard components
-│   │   ├── projects/      # Project list, detail, kanban, form
-│   │   ├── tasks/         # Task list, form, badges
-│   │   ├── calendar/      # Calendar view
-│   │   ├── team/          # Team member cards
-│   │   ├── reports/       # Report charts
-│   │   └── settings/      # Settings forms
-│   ├── lib/
-│   │   ├── auth.ts        # Auth.js configuration
-│   │   ├── prisma.ts      # Prisma client singleton
-│   │   └── utils.ts       # Helper functions & constants
-│   └── middleware.ts      # Route protection
-├── .env                   # Environment variables (jangan di-commit)
-├── .env.example           # Template environment variables
-├── tailwind.config.ts     # Tailwind + design tokens
-└── package.json
-```
-
----
-
-## Database Schema
-
-Model utama:
-
-| Model | Keterangan |
-|-------|-----------|
-| `User` | Akun pengguna, terhubung ke Auth.js |
-| `Project` | Project dengan status, priority, tanggal |
-| `ProjectMember` | Relasi user ↔ project dengan role |
-| `Task` | Task dengan status, priority, assignee |
-| `Milestone` | Milestone per project |
-| `Comment` | Komentar pada task |
-| `Activity` | Log aktivitas project/task |
-| `Label` | Label untuk task |
-| `Risk` | Risiko project |
-| `Issue` | Issue/bug project |
-
----
-
-## Deploy ke Vercel
-
-### 1. Push ke GitHub
-
-```bash
-git init
-git add .
-git commit -m "initial commit"
-git remote add origin https://github.com/username/pm-dashboard.git
-git push -u origin main
-```
-
-### 2. Import di Vercel
-
-1. Buka [vercel.com](https://vercel.com) → **Add New Project**
-2. Import repository dari GitHub
-3. Tambahkan **Environment Variables**:
-
-```
-DATABASE_URL        = postgresql://... (dari Neon/Supabase)
-AUTH_SECRET         = (string random, min 32 karakter)
-NEXTAUTH_URL        = https://your-app.vercel.app
-```
-
-4. Klik **Deploy**
-
-### 3. Setelah deploy, jalankan migration
-
-Di terminal lokal dengan environment variable production:
-
-```bash
-DATABASE_URL="postgresql://..." npx prisma db push
-DATABASE_URL="postgresql://..." npx tsx prisma/seed.ts
-```
-
----
-
-## Troubleshooting
-
-### Tidak bisa login
-- Pastikan `DATABASE_URL` sudah benar di `.env.local`
-- Pastikan sudah menjalankan `npm run db:seed`
-- Restart dev server setelah mengubah `.env`
-
-### Error "Can't reach database server"
-- Cek `DATABASE_URL` di `.env.local` — pastikan bukan `localhost:5432` kalau pakai Neon
-- `.env.local` punya prioritas lebih tinggi dari `.env` — pastikan keduanya berisi URL yang sama
-
-### Prisma error saat build
-- Jalankan `npx prisma generate` sebelum build
-- Sudah di-handle otomatis oleh script `build` di `package.json`
-
-### Port 3000 sudah terpakai
-```bash
-npm run dev -- -p 3001
-```
-
----
-
-## Generate AUTH_SECRET
-
-```bash
-# Linux/Mac
-openssl rand -base64 32
-
-# Windows PowerShell
-[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
-
-# Atau pakai npx
-npx auth secret
-```
-
-
-
+Project management dashboard for teams to manage projects, tasks, milestones, teams, risks, issues, resources, invoices, and reports in one workspace.
