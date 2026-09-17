@@ -4,8 +4,9 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { Eye, EyeOff, Loader2, Zap } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { BrandLogo } from "@/components/brand-logo";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -71,13 +72,7 @@ export function LoginForm() {
         <div className="w-full md:w-[42%] flex flex-col px-8 py-8">
 
           {/* Logo */}
-          <div className="flex items-center gap-2 mb-6">
-            <div className="flex h-7 w-7 items-center justify-center rounded-md"
-              style={{ background: "hsl(245 86% 82% / 0.15)" }}>
-              <Zap className="h-3.5 w-3.5" style={{ color: "hsl(245 70% 55%)" }} />
-            </div>
-            <span className="text-sm font-bold tracking-tight text-gray-800">Synchro</span>
-          </div>
+          <BrandLogo className="mb-6" markClassName="h-8 w-8" />
 
           {/* Heading */}
           <div className="mb-6">

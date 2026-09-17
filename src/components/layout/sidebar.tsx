@@ -13,7 +13,6 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
-  Zap,
   Plus,
   UserCog,
   Flag,
@@ -32,6 +31,7 @@ import { WorkspaceSwitcher } from "@/components/layout/workspace-switcher";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { useTranslations } from "next-intl";
 import { useSession } from "next-auth/react";
+import { BrandLogo } from "@/components/brand-logo";
 
 type SidebarProps = {
   /** "desktop" = inline sidebar in layout (hidden < md). "mobile" = full-height drawer. */
@@ -138,7 +138,7 @@ const navItems = [
               style={{ background: "hsl(var(--sidebar-active-bg) / 0.2)" }}
               className="flex h-8 w-8 items-center justify-center rounded-lg"
             >
-              <Zap className="h-4 w-4" style={{ color: "hsl(var(--sidebar-active-bg))" }} />
+              <BrandLogo showWordmark={false} markClassName="h-8 w-8" />
             </div>
           ) : (
             <WorkspaceSwitcher sidebarMode />

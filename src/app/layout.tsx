@@ -15,10 +15,10 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Synchro — Project Management",
+    default: "Syncro | Project Management",
     template: "%s | Synchro",
   },
-  description: "Premium project management for modern teams. Track projects, manage tasks, and collaborate seamlessly.",
+  description: "Syncro helps teams manage projects, tasks, milestones, risks, resources, and invoices in one workspace.",
 };
 
 export default async function RootLayout({

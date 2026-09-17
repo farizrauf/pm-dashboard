@@ -1,9 +1,10 @@
 "use client";
 
-import { ChevronsUpDown, Trash2, Zap } from "lucide-react";
+import { ChevronsUpDown, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { BrandLogo } from "@/components/brand-logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,23 +81,7 @@ export function WorkspaceSwitcher({ sidebarMode }: { sidebarMode?: boolean }) {
         <button
           className="flex w-full items-center gap-2.5 rounded-lg px-0 py-1 text-left transition-all outline-none hover:bg-white/10"
         >
-          <div
-            className="flex h-8 w-8 items-center justify-center rounded-lg shrink-0"
-            style={
-              sidebarMode
-                ? { background: "hsl(var(--sidebar-active-bg) / 0.25)" }
-                : { background: "hsl(var(--primary) / 0.1)" }
-            }
-          >
-            <Zap
-              className="h-4 w-4"
-              style={
-                sidebarMode
-                  ? { color: "hsl(var(--sidebar-active-bg))" }
-                  : { color: "hsl(var(--primary))" }
-              }
-            />
-          </div>
+          <BrandLogo showWordmark={false} markClassName="h-8 w-8" />
           <div className="flex-1 min-w-0">
             <p
               className="text-sm font-bold truncate leading-none"
@@ -122,9 +107,7 @@ export function WorkspaceSwitcher({ sidebarMode }: { sidebarMode?: boolean }) {
         <DropdownMenuSeparator />
         {workspaces.map((ws) => (
           <DropdownMenuItem key={ws.id} className="gap-2" onClick={() => switchWorkspace(ws)}>
-            <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
-              <Zap className="h-3 w-3 text-primary" />
-            </div>
+            <BrandLogo showWordmark={false} markClassName="h-5 w-5" />
             <span className="text-sm">{ws.name}</span>
           </DropdownMenuItem>
         ))}
