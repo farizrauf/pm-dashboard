@@ -45,7 +45,7 @@ function MobileDrawer() {
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-        <Dialog.Content className="fixed inset-y-0 left-0 z-50 h-full w-[280px] outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left">
+        <Dialog.Content className="fixed inset-y-0 left-0 z-50 h-full w-[min(280px,86vw)] max-w-full overflow-hidden outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left">
           <Sidebar mode="mobile" onClose={() => setOpen(false)} />
         </Dialog.Content>
       </Dialog.Portal>

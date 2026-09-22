@@ -84,7 +84,7 @@ const navItems = [
             isCollapsed ? "w-[60px]" : "w-[220px]",
           ],
           // Mobile drawer
-          mode === "mobile" && "fixed inset-y-0 left-0 z-50 w-[280px] h-full shadow-2xl"
+          mode === "mobile" && "h-full w-full min-w-0 shadow-2xl"
         )}
       >
         {/* Right border accent line for extra visual separation */}
@@ -146,7 +146,7 @@ const navItems = [
         </div>
 
         {/* Nav */}
-        <ScrollArea className="flex-1 py-2">
+        <ScrollArea className="min-h-0 flex-1 py-2">
           {/* Section label */}
           {!collapsed && (
             <p
